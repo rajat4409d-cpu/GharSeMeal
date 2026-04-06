@@ -1,8 +1,18 @@
+const firebaseConfig = {
+  apiKey: "AIzaSyCmrT8rF_nmybhxRZL265kHv0zXGgfAoy0",
+  authDomain: "gharsemeal-1033a.firebaseapp.com",
+  projectId: "gharsemeal-1033a",
+  storageBucket: "gharsemeal-1033a.firebasestorage.app",
+  messagingSenderId: "265826374232",
+  appId: "1:265826374232:web:04404977f61b4a2bde302d"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
 const DB_COOKS_KEY = "gharsemeal_cooks";
 const DB_ORDERS_KEY = "gharsemeal_orders";
-const DB_USERS_KEY = "gharsemeal_users";
-
-// Mock Data
+const DB_USERS_KEY = "gharsemeal_users";// Mock Data
 const initialCooks = [
   {
     id: 1,
@@ -46,37 +56,37 @@ const app = {
   map: null,
   markers: [],
   selectedCookId: null,
-  activeView: 'view-landing',
+  activeView: 'landing',
   currentUser: null,
   authMode: { student: 'login', cook: 'login' },
   
   init() {
     this.updateGlobalHeader();
-    // Scaffold DB
-    if (!localStorage.getItem(DB_COOKS_KEY)) {
-      localStorage.setItem(DB_COOKS_KEY, JSON.stringify(initialCooks));
-    } else {
-      const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-      const uniqueCooks = [];
-      const seen = new Set();
-      for (const c of cooks) {
-        if (!seen.has(c.name)) {
-          uniqueCooks.push(c);
-          seen.add(c.name);
-        }
-      }
-      localStorage.setItem(DB_COOKS_KEY, JSON.stringify(uniqueCooks));
-    }
-    
-    if (!localStorage.getItem(DB_ORDERS_KEY)) {
-      localStorage.setItem(DB_ORDERS_KEY, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(DB_USERS_KEY)) {
-      localStorage.setItem(DB_USERS_KEY, JSON.stringify([]));
-    }
     
     // Auto-set today in date picker
     document.getElementById('b-date').valueAsDate = new Date();
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        db.collection('users').doc(user.uid).get()
+        .then(doc => {
+          if (doc.exists) {
+             this.currentUser = { uid: user.uid, ...doc.data() };
+             this.showView('studentDashboard');
+          } else {
+             db.collection('cooks').doc(user.uid).get().then(cookDoc => {
+                if (cookDoc.exists) {
+                   this.currentUser = { uid: user.uid, ...cookDoc.data() };
+                   this.showView('cookDashboard');
+                }
+             })
+          }
+        });
+      } else {
+        this.currentUser = null;
+        this.showView('landing');
+      }
+    });
   },
 
   showView(viewId) {
@@ -84,21 +94,36 @@ const app = {
     document.getElementById(viewId).classList.add('active');
     this.activeView = viewId;
 
-    if (viewId === 'view-student-dashboard') {
+    if (viewId === 'studentDashboard') {
       this.initStudentDashboard();
-    } else if (viewId === 'view-cook-dashboard') {
+    } else if (viewId === 'cookDashboard') {
       this.initCookDashboard();
-    } else if (viewId === 'view-student-tracker') {
+    } else if (viewId === 'mealTracker') {
       this.initTrackerView();
     }
   },
 
   loginAs(role) {
     if (role === 'student') {
-      this.showView('view-student-auth');
+      this.showView('studentLogin');
     } else {
-      this.showView('view-cook-auth');
+      this.showView('cookLogin');
     }
+  },
+
+  loginAsStudent(forceMode) {
+    this.toggleAuthMode(forceMode || 'login');
+    this.showView('studentLogin');
+  },
+
+  loginAsCook(forceMode) {
+    this.toggleCookFormMode(forceMode || 'login');
+    this.showView('cookLogin');
+  },
+
+  toggleCookFormMode(mode) {
+    document.getElementById('cook-login-view').style.display = mode === 'login' ? 'block' : 'none';
+    document.getElementById('cook-signup-view').style.display = mode === 'signup' ? 'block' : 'none';
   },
 
   toggleAuthMode(forceMode) {
@@ -123,30 +148,43 @@ const app = {
     const password = document.getElementById('auth-password').value;
     const name = document.getElementById('auth-name').value.trim() || email.split('@')[0];
     
-    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
+    document.getElementById('auth-submit-btn').textContent = "Loading...";
     
     if (mode === 'signup') {
-      let newUser = { id: Date.now(), role: 'student', name, email, password, walletBalance: 500, walletHistory: [] };
-      users.push(newUser);
-      localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
-      this.currentUser = newUser;
+      auth.createUserWithEmailAndPassword(email, password)
+      .then(cred => {
+         return db.collection('users').doc(cred.user.uid).set({
+           name, email, role: 'student',
+           walletBalance: 500, mealsEaten: 0, runnerCount: 0,
+           createdAt: firebase.firestore.FieldValue.serverTimestamp()
+         });
+      })
+      .then(() => {
+         e.target.reset();
+         document.getElementById('auth-submit-btn').textContent = "Sign Up";
+      })
+      .catch(err => {
+         alert(err.message);
+         document.getElementById('auth-submit-btn').textContent = "Sign Up";
+      });
     } else {
-      const user = users.find(u => u.role === 'student' && (u.email === email || u.name === email) && u.password === password);
-      if (!user) {
-        alert("Invalid email/name or password.");
-        return;
-      }
-      this.currentUser = user;
+      auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+         e.target.reset();
+         document.getElementById('auth-submit-btn').textContent = "Login to Dashboard";
+      })
+      .catch(err => {
+         alert(err.message);
+         document.getElementById('auth-submit-btn').textContent = "Login to Dashboard";
+      });
     }
-    
-    e.target.reset();
-    this.updateCurrentUser();
-    this.showView('view-student-dashboard');
   },
 
   logout() {
-    this.currentUser = null;
-    this.showView('view-landing');
+    auth.signOut().then(() => {
+       this.currentUser = null;
+       this.showView('landing');
+    });
   },
 
   initStudentDashboard() {
@@ -181,14 +219,14 @@ const app = {
     // Leaflet needs to be ready, wrap in a tiny timeout to ensure DOM visibility
     setTimeout(() => {
       if (this.map) {
-         this.map.invalidateSize(); // Fixes tile loading issue if container was hidden
-         return; 
+         this.map.remove();
+         this.map = null;
       }
       // Demo center
       const centerLat = 28.6130;
       const centerLon = 77.2025;
       
-      this.map = L.map('leaflet-map').setView([centerLat, centerLon], 15);
+      this.map = L.map('map').setView([centerLat, centerLon], 15);
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
@@ -213,58 +251,86 @@ const app = {
 
   renderCooks() {
     const listEl = document.getElementById('cook-list');
-    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-    listEl.innerHTML = '';
-    
-    const searchTerm = (document.getElementById('filter-search')?.value || '').toLowerCase();
-    const filterCuisine = (document.getElementById('filter-cuisine')?.value || '').toLowerCase();
+    db.collection('cooks').get()
+      .then(snapshot => {
+         const cooks = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+         listEl.innerHTML = '';
+         
+         const searchTerm = (document.getElementById('filter-search')?.value || '').toLowerCase();
+         const filterCuisine = (document.getElementById('filter-cuisine')?.value || '').toLowerCase();
 
-    const filteredCooks = cooks.filter(cook => {
-      const matchSearch = cook.name.toLowerCase().includes(searchTerm) || 
-                          cook.menu.some(m => m.toLowerCase().includes(searchTerm));
-      const matchCuisine = filterCuisine === '' || cook.cuisine.toLowerCase().includes(filterCuisine);
-      return matchSearch && matchCuisine;
-    });
+         const filteredCooks = cooks.filter(cook => {
+           const cookName = cook.kitchenName || cook.cookName || cook.name || '';
+           const matchSearch = cookName.toLowerCase().includes(searchTerm) || 
+                               (cook.menu || []).some(m => m.toLowerCase().includes(searchTerm));
+           const matchCuisine = filterCuisine === '' || (cook.cuisine || '').toLowerCase().includes(filterCuisine);
+           return matchSearch && matchCuisine;
+         });
 
-    if (filteredCooks.length === 0) {
-      listEl.innerHTML = '<p style="text-align:center; color:var(--gray-500); padding:20px;">No cooks found matching your criteria.</p>';
-      return;
-    }
+         if (filteredCooks.length === 0) {
+           listEl.innerHTML = '<p style="text-align:center; color:var(--gray-500); padding:20px;">No cooks found matching your criteria.</p>';
+           return;
+         }
 
-    filteredCooks.forEach(cook => {
-      const card = document.createElement('div');
-      card.className = `cook-card ${cook.recommended ? 'recommended' : ''}`;
-      
-      let badgeHtml = cook.recommended ? `<div class="tag-recommended">✦ AI Recommended</div>` : '';
-      
-      card.innerHTML = `
-        <div class="cook-card-banner"></div>
-        ${badgeHtml}
-        <div class="cook-card-content">
-          <div class="cook-header">
-            <div class="cook-name">${cook.name}</div>
-            <div class="cook-rating">★ ${cook.rating}</div>
-          </div>
-          <div class="cook-cuisine">${cook.cuisine}</div>
-          <div class="hygiene-badge">Hygiene Score: ${cook.hygiene}%</div>
-          <div class="cook-footer">
-            <div class="cook-price">₹${cook.price} <span style="font-size:0.8rem; font-weight:normal; color:var(--gray-500);">/ meal</span></div>
-            <button class="btn btn-primary" onclick="app.viewCookProfile(${cook.id})" style="padding: 10px 20px; font-size:0.9rem;">View Menu</button>
-          </div>
-        </div>
-      `;
-      listEl.appendChild(card);
-    });
+         filteredCooks.forEach(cook => {
+           const cookName = cook.kitchenName || cook.cookName || cook.name || 'Cook';
+           const rating = cook.rating || 5.0;
+           const hygiene = cook.hygiene || 100;
+           const card = document.createElement('div');
+           card.className = `cook-card ${cook.recommended ? 'recommended' : ''}`;
+           
+           let badgeHtml = cook.recommended ? `<div class="tag-recommended">✦ AI Recommended</div>` : '';
+           
+           card.innerHTML = `
+             <div class="cook-card-banner"></div>
+             ${badgeHtml}
+             <div class="cook-card-content">
+               <div class="cook-header">
+                 <div class="cook-name">${cookName}</div>
+                 <div class="cook-rating">★ ${rating}</div>
+               </div>
+               <div class="cook-cuisine">${cook.cuisine || ''}</div>
+               <div class="hygiene-badge">Hygiene Score: ${hygiene}%</div>
+               <div class="cook-footer">
+                 <div class="cook-price">₹${cook.pricePerMeal || cook.price || 100} <span style="font-size:0.8rem; font-weight:normal; color:var(--gray-500);">/ meal</span></div>
+                 <button class="btn btn-primary" onclick="app.showCookProfile('${cook.id}')" style="padding: 10px 20px; font-size:0.9rem;">View Menu</button>
+               </div>
+             </div>
+           `;
+           listEl.appendChild(card);
+         });
+      });
   },
 
-  viewCookProfile(id) {
-    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-    const cook = cooks.find(c => c.id === id);
-    this.selectedCookId = id;
-    
-    const profileEl = document.getElementById('cook-profile-content');
-    
-    const menuLi = cook.menu.map(item => `<li>${item}</li>`).join('');
+  showCookProfile(id) {
+    db.collection('cooks').doc(id).get().then(doc => {
+      if(!doc.exists) return;
+      const cook = {id: doc.id, ...doc.data()};
+      this.selectedCookId = id;
+      
+      const cookName = cook.kitchenName || cook.cookName || cook.name || 'Cook';
+      const rating = cook.rating || 5.0;
+      const price = cook.pricePerMeal || cook.price || 100;
+      
+      document.getElementById('cp-name').textContent = cookName;
+      document.getElementById('cp-rating').textContent = rating;
+      document.getElementById('cp-avatar').textContent = cookName.charAt(0);
+      document.getElementById('cp-price').textContent = `₹${price}`;
+      
+      const menu = cook.menu || [];
+      const menuHtml = menu.map(item => `
+        <div class="card" style="padding:15px; display:flex; gap:15px; border:1px solid var(--gray-200); box-shadow:none;">
+           <div style="width:60px; height:60px; background:var(--gray-200); border-radius:12px;"></div>
+           <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                 <div style="font-weight:800; font-size:1.1rem; color:var(--secondary);">${item}</div>
+                 <div style="color:var(--primary); font-weight:700;">₹${price}</div>
+              </div>
+           </div>
+        </div>
+      `).join('');
+      
+      document.getElementById('cp-menu-grid').innerHTML = menuHtml;
     
     const reviewsHtml = (cook.reviews || [
       { name: "Rahul S.", rating: 5, comment: "Just like home! Saving my life during exams." },
@@ -275,45 +341,14 @@ const app = {
         <p style="color:var(--gray-500); margin-top:4px;">"${r.comment}"</p>
       </div>
     `).join('');
-
-    profileEl.innerHTML = `
-      <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-        <h3 style="color: var(--navy); margin-bottom: 5px;">${cook.name}</h3>
-        <p style="color: var(--saffron); font-weight: bold;">★ ${cook.rating} <span style="color: var(--gray-500); font-weight: normal; margin-left:10px;">Hygiene: ${cook.hygiene}%</span></p>
-        <hr style="border: 0; border-top: 1px solid var(--gray-200); margin: 15px 0;">
-        <h4 style="margin-bottom: 10px;">Today's Menu</h4>
-        <ul style="padding-left: 20px; line-height: 1.6; margin-bottom: 20px; color: var(--gray-800);">
-          ${menuLi}
-        </ul>
-        <h3 style="margin-bottom: 20px;">Price: ₹${cook.price}/meal</h3>
-        <button class="btn btn-primary w-100" onclick="app.showBookingForm()">Book a Meal</button>
-        <a href="https://wa.me/91${cook.phone || '000000000'}" target="_blank" class="btn btn-secondary w-100" style="margin-top:15px; background:#25D366; color:white; display:flex; justify-content:center; align-items:center; gap:8px; text-decoration:none;">🟢 Contact on WhatsApp</a>
-        
-        <div style="margin-top: 30px;">
-          <h4 style="margin-bottom: 15px; color: var(--navy);">Student Reviews</h4>
-          ${reviewsHtml}
-          
-          <div id="leave-review-section" style="margin-top: 15px;">
-             <button class="btn btn-secondary w-100" style="background:var(--off-white); color:var(--navy); border:1px solid var(--gray-200);" onclick="document.getElementById('review-form').style.display='block'; this.style.display='none';">💬 Leave a Review</button>
-             
-             <div id="review-form" style="display:none; background:var(--off-white); padding:15px; border-radius:8px; border:1px solid var(--gray-200);">
-               <label style="font-size:0.85rem; font-weight:bold;">Rating (1-5)</label>
-               <input type="number" id="new-review-rating" min="1" max="5" value="5" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid var(--gray-200); border-radius:4px;">
-               
-               <label style="font-size:0.85rem; font-weight:bold;">Comment</label>
-               <textarea id="new-review-comment" rows="2" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid var(--gray-200); border-radius:4px;" placeholder="How was the food?"></textarea>
-               
-               <button class="btn btn-primary w-100" style="padding:10px;" onclick="app.submitReview(${cook.id})">Post Review</button>
-             </div>
-          </div>
-        </div>
-      </div>
-    `;
     
-    this.showView('view-cook-profile');
+    document.getElementById('cp-reviews-list').innerHTML = reviewsHtml;
+    
+    this.showView('cookProfile');
   },
 
-  submitReview(cookId) {
+  submitReview() {
+    const cookId = this.selectedCookId;
     const rating = document.getElementById('new-review-rating').value;
     const comment = document.getElementById('new-review-comment').value.trim();
     if (!comment) return;
@@ -338,51 +373,53 @@ const app = {
     this.viewCookProfile(cookId); // re-render
   },
 
-  showBookingForm() {
-    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-    const cook = cooks.find(c => c.id === this.selectedCookId);
-    
-    const bookingDetails = document.getElementById('booking-details');
-    bookingDetails.innerHTML = `<h4 style="margin-bottom:10px; color: var(--navy);">Ordering from: ${cook.name}</h4><p>Standard Meal Price: ₹${cook.price}</p>`;
-    
-    // Reset form states
-    document.getElementById('b-runner').checked = false;
-    document.getElementById('b-plan').value = 'meal';
-    
-    const weeklyList = document.getElementById('b-weekly-list');
-    if (weeklyList) {
-       const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-       weeklyList.innerHTML = days.map(day => {
-         const isSunday = day === 'Sun';
-         return `
-         <div class="booking-day-col">
-           <div style="font-weight:800; color:var(--secondary); font-size:1.1rem; border-bottom:2px solid #E2E4E9; padding-bottom:10px;">${day}</div>
-           <label class="meal-check-slot">
-             <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">BRKFST</span>
-             <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="breakfast" onchange="app.calculateTotal()" ${isSunday ? 'checked' : ''}>
-           </label>
-           <label class="meal-check-slot">
-             <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">LUNCH</span>
-             <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="lunch" onchange="app.calculateTotal()" checked>
-           </label>
-           <label class="meal-check-slot">
-             <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">DINNER</span>
-             <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="dinner" onchange="app.calculateTotal()" checked>
-           </label>
-         </div>
-       `}).join('');
-    }
+  currentCookName: '',
+  currentCookPrice: 100,
 
-    this.showView('view-booking');
-    this.calculateTotal();
+  showBookingForm() {
+    db.collection('cooks').doc(this.selectedCookId).get().then(doc => {
+      const cook = doc.data();
+      this.currentCookName = cook.kitchenName || cook.cookName || cook.name || 'Cook';
+      this.currentCookPrice = cook.pricePerMeal || cook.price || 100;
+      
+      const bookingDetails = document.getElementById('booking-details');
+      bookingDetails.innerHTML = `<h4 style="margin-bottom:10px; color: var(--navy);">Ordering from: ${this.currentCookName}</h4><p>Standard Meal Price: ₹${this.currentCookPrice}</p>`;
+      
+      // Reset form states
+      document.getElementById('b-runner').checked = false;
+      document.getElementById('b-plan').value = 'meal';
+      
+      const weeklyList = document.getElementById('b-weekly-list');
+      if (weeklyList) {
+         const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+         weeklyList.innerHTML = days.map(day => {
+           const isSunday = day === 'Sun';
+           return `
+           <div class="booking-day-col">
+             <div style="font-weight:800; color:var(--secondary); font-size:1.1rem; border-bottom:2px solid #E2E4E9; padding-bottom:10px;">${day}</div>
+             <label class="meal-check-slot">
+               <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">BRKFST</span>
+               <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="breakfast" onchange="app.calculateTotal()" ${isSunday ? 'checked' : ''}>
+             </label>
+             <label class="meal-check-slot">
+               <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">LUNCH</span>
+               <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="lunch" onchange="app.calculateTotal()" checked>
+             </label>
+             <label class="meal-check-slot">
+               <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">DINNER</span>
+               <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="dinner" onchange="app.calculateTotal()" checked>
+             </label>
+           </div>
+         `}).join('');
+      }
+
+      this.showView('booking');
+      this.calculateTotal();
+    });
   },
 
   calculateTotal() {
-    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-    const cook = cooks.find(c => c.id === this.selectedCookId);
-    if(!cook) return;
-    
-    let basePrice = cook.price;
+    let basePrice = this.currentCookPrice;
     const plan = document.getElementById('b-plan').value;
     const isRunner = document.getElementById('b-runner').checked;
     
@@ -425,54 +462,48 @@ const app = {
     }
   },
 
-  handleBookingSubmit(e) {
-    e.preventDefault();
+  confirmBooking(e) {
+    if(e) e.preventDefault();
     const method = document.getElementById('b-pay-method').value;
+    
     if(method === 'wallet' && this.currentBookingTotal > 0) {
-       this.currentUser.walletBalance -= this.currentBookingTotal;
-       this.currentUser.walletHistory = this.currentUser.walletHistory || [];
-       this.currentUser.walletHistory.unshift({
-          date: document.getElementById('b-date').value || new Date().toISOString().split('T')[0],
-          amount: -this.currentBookingTotal,
-          desc: `Booking: ${document.getElementById('b-plan').value.toUpperCase()} Plan`
-       });
-       this.updateCurrentUser();
+      if(!this.currentUser || this.currentUser.walletBalance < this.currentBookingTotal) return;
+      db.collection('users').doc(auth.currentUser.uid).update({
+        walletBalance: firebase.firestore.FieldValue.increment(-this.currentBookingTotal)
+      });
     }
 
-    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-    const cook = cooks.find(c => c.id === this.selectedCookId);
-    
     const date = document.getElementById('b-date').value;
     const time = document.getElementById('b-time').value;
     const plan = document.getElementById('b-plan').value;
     const isRunner = document.getElementById('b-runner').checked;
+    const bookingCode = Math.floor(1000 + Math.random() * 9000).toString();
     
-    const order = {
-      id: Date.now(),
-      cookId: cook.id,
-      cookName: cook.name,
+    db.collection('bookings').add({
+      studentId: auth.currentUser.uid,
+      cookId: this.selectedCookId,
+      cookName: this.currentCookName,
+      mealType: plan.toUpperCase(),
       date,
-      time,
-      plan,
+      pickupTime: time,
+      planType: plan,
+      totalAmount: this.currentBookingTotal,
+      bookingCode,
+      status: 'pending',
       isRunner,
-      status: 'Pending'
-    };
-    
-    const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY));
-    orders.push(order);
-    localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
-    
-    const orderIdCode = order.id.toString().slice(-4);
-    document.getElementById('success-cook').textContent = cook.name;
-    document.getElementById('success-meal').textContent = document.getElementById('b-plan').value.toUpperCase();
-    document.getElementById('success-time').textContent = time;
-    document.getElementById('success-date').textContent = date;
-    document.getElementById('success-code').textContent = '#' + orderIdCode;
-    
-    let totalText = document.getElementById('b-total-amount').textContent;
-    document.getElementById('success-total').textContent = totalText;
-    
-    this.showView('view-booking-success');
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      document.getElementById('success-cook').textContent = this.currentCookName;
+      document.getElementById('success-meal').textContent = plan.toUpperCase();
+      document.getElementById('success-time').textContent = time;
+      document.getElementById('success-date').textContent = date;
+      document.getElementById('success-code').textContent = '#' + bookingCode;
+      
+      let totalText = document.getElementById('b-total-amount').textContent;
+      document.getElementById('success-total').textContent = totalText;
+      
+      this.showView('booking-success');
+    }).catch(err => alert(err.message));
   },
 
   wizardDishes: [],
@@ -554,63 +585,46 @@ const app = {
     `;
   },
 
-  submitCookSignup() {
-    const kName = document.getElementById('cs-kname').value.trim();
-    const fullName = document.getElementById('cs-name').value.trim();
+  handleCookSignup() {
+    const kitchenName = document.getElementById('cs-kname').value.trim();
+    const cookName = document.getElementById('cs-name').value.trim();
     const phone = document.getElementById('cs-phone').value.trim();
     const area = document.getElementById('cs-area').value.trim();
-    const pass = document.getElementById('cs-pwd').value.trim();
-    const price = parseInt(document.getElementById('cs-price').value);
-    const dishStr = this.wizardDishes.map(d => `${d.name} ${d.type==='Veg'?'🟢':'🔴'}`).join(', ');
+    const email = document.getElementById('cs-phone').value.trim() + "@cook.com"; // dummy email from phone or require email
+    const password = document.getElementById('cs-pwd').value.trim() || 'password';
+    const pricePerMeal = parseInt(document.getElementById('cs-price').value);
+    const cuisine = this.wizardDishes.map(d => `${d.name} ${d.type==='Veg'?'🟢':'🔴'}`).join(', ');
+    const menu = this.wizardDishes.map(d => `${d.name} (${d.type})`);
 
-    const newCook = {
-      id: Date.now(),
-      role: 'cook',
-      phone: phone,
-      password: pass,
-      name: kName,
-      fullName: fullName,
-      address: area,
-      cuisine: dishStr
-    };
-    
-    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
-    users.push(newCook);
-    localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
-    
-    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-    cooks.push({
-      id: newCook.id,
-      name: newCook.name,
-      cuisine: dishStr,
-      price: price,
-      phone: phone, // Save mapped phone
-      rating: 5.0,
-      hygiene: 100,
-      lat: 28.6130 + (Math.random() * 0.01),
-      lon: 77.2000 + (Math.random() * 0.01),
-      menu: this.wizardDishes.map(d => `${d.name} (${d.type})`),
-      recommended: false
-    });
-    localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
-    
-    this.currentUser = newCook;
-    this.showView('view-cook-dashboard');
+    const clEmail = document.getElementById('cl-email')?.value || email; // We use email field in cooklogin
+    const actualEmail = document.getElementById('cs-email')?.value || "test@test.com";
+
+    // Use cook signup snippet
+    const userEmail = prompt("Enter email for your chef account:", "");
+    if(!userEmail) return;
+
+    auth.createUserWithEmailAndPassword(userEmail, password)
+    .then(cred => db.collection('cooks').doc(cred.user.uid).set({
+      kitchenName, cookName, area, phone, cuisine,
+      pricePerMeal, menu, rating: 5.0, role: 'cook',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }))
+    .then(() => {
+       alert("Live success!");
+    })
+    .catch(err => alert(err.message));
   },
   
   handleCookLogin(e) {
     e.preventDefault();
-    const phone = document.getElementById('cl-phone').value.trim();
-    const pass = document.getElementById('cl-pwd').value.trim();
-    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
+    const email = document.getElementById('cl-email').value.trim();
+    const pass = document.getElementById('cl-password').value.trim();
     
-    const valid = users.find(u => u.phone === phone && u.password === pass && u.role === 'cook');
-    if (valid) {
-      this.currentUser = valid;
-      this.showView('view-cook-dashboard');
-    } else {
-      alert("Invalid credentials.");
-    }
+    auth.signInWithEmailAndPassword(email, pass)
+    .then(() => {
+       // state managed by onAuthStateChanged
+    })
+    .catch(err => alert(err.message));
   },
 
   initCookDashboard() {
@@ -697,43 +711,40 @@ const app = {
   },
 
   renderOrders() {
-    const ordersItem = JSON.parse(localStorage.getItem(DB_ORDERS_KEY)) || [];
-    const htmlEl = document.getElementById('incoming-orders-list');
+    if (!auth.currentUser) return;
+    const htmlEl = document.getElementById('cook-orders-list');
+    if (!htmlEl) return;
     
-    if (ordersItem.length === 0) {
-      htmlEl.innerHTML = '<p>No incoming orders yet.</p>';
-      return;
-    }
-    
-    // Sort descending by id
-    ordersItem.sort((a,b) => b.id - a.id);
-    
-    htmlEl.innerHTML = ordersItem.map(o => `
-        <div class="order-card" style="position:relative;">
-          <p><strong>Order ID:</strong> #${o.id.toString().slice(-4)}</p>
-          <p><strong>Time:</strong> ${o.time} (${o.date})</p>
-          <p><strong>Plan:</strong> ${o.plan.toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup</span>' : ''}</p>
-          
-          <div style="margin-top:12px;">
-            ${o.status === 'Pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="app.updateOrderStatus(${o.id}, 'Accepted')">Accept Order</button>` : ''}
-            ${o.status === 'Accepted' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#3B82F6;" onclick="app.updateOrderStatus(${o.id}, 'Ready')">Mark Ready</button>` : ''}
-            ${o.status === 'Ready' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#10B981;" onclick="app.updateOrderStatus(${o.id}, 'Complete')">Mark Complete</button>` : ''}
-            ${o.status === 'Complete' ? `<span style="background: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✅ Completed</span>` : ''}
-          </div>
-        </div>
-      </div>
-    `).join('');
+    db.collection('bookings')
+      .where('cookId', '==', auth.currentUser.uid)
+      .onSnapshot(snapshot => {
+         const orders = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+         if (orders.length === 0) {
+           htmlEl.innerHTML = '<p>No incoming orders yet.</p>';
+           return;
+         }
+         
+         orders.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+         
+         htmlEl.innerHTML = orders.map(o => `
+             <div class="order-card" style="position:relative; margin-bottom: 20px;">
+               <p><strong>Booking Code:</strong> #${o.bookingCode || '0000'}</p>
+               <p><strong>Time:</strong> ${o.pickupTime} (${o.date})</p>
+               <p><strong>Plan:</strong> ${(o.planType || 'Meal').toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup</span>' : ''}</p>
+               
+               <div style="margin-top:12px;">
+                 ${o.status === 'pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="app.updateOrderStatus('${o.id}', 'accepted')">Accept Order</button>` : ''}
+                 ${o.status === 'accepted' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#3B82F6;" onclick="app.updateOrderStatus('${o.id}', 'ready')">Mark Ready</button>` : ''}
+                 ${o.status === 'ready' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#10B981;" onclick="app.updateOrderStatus('${o.id}', 'complete')">Mark Complete</button>` : ''}
+                 ${o.status === 'complete' ? `<span style="background: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✅ Completed</span>` : ''}
+               </div>
+             </div>
+         `).join('');
+      });
   },
   
   updateOrderStatus(orderId, newStatus) {
-    const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY));
-    const idx = orders.findIndex(o => o.id === orderId);
-    if(idx > -1) {
-      orders[idx].status = newStatus;
-      localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
-    }
-    this.renderOrders();
-    this.initCookDashboard(); // refresh stats!
+    db.collection('bookings').doc(orderId).update({ status: newStatus }).catch(err => alert(err.message));
   },
 
   initTrackerView() {
@@ -837,11 +848,17 @@ const app = {
   },
 
   addWalletFunds(amt) {
-     this.currentUser.walletBalance += amt;
-     this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: amt, desc: 'Added via Mock Gateway' });
-     this.updateCurrentUser();
-     alert(`₹${amt} added to Wallet successfully!`);
-     this.showView('view-student-dashboard');
+     if(!auth.currentUser) return;
+     db.collection('users').doc(auth.currentUser.uid).update({
+        walletBalance: firebase.firestore.FieldValue.increment(amt)
+     }).then(() => {
+        alert(`₹${amt} added to Wallet successfully!`);
+        this.currentUser.walletBalance += amt;
+        this.currentUser.walletHistory = this.currentUser.walletHistory || [];
+        this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: amt, desc: 'Added Funds' });
+        this.updateCurrentUser();
+        this.showView('studentDashboard');
+     }).catch(err => alert(err.message));
   },
 
   markMealPickedUp(dayIdx, type) {
@@ -853,13 +870,10 @@ const app = {
   },
 
   updateCurrentUser() {
-    if (this.currentUser) {
-      const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
-      const idx = users.findIndex(u => u.id === this.currentUser.id);
-      if (idx !== -1) {
-        users[idx] = this.currentUser;
-        localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
-      }
+    if (this.currentUser && auth.currentUser) {
+       const collection = this.currentUser.role === 'student' ? 'users' : 'cooks';
+       db.collection(collection).doc(auth.currentUser.uid).set(this.currentUser, { merge: true })
+         .catch(err => console.error(err));
     }
     this.updateGlobalHeader();
   },
@@ -874,7 +888,7 @@ const app = {
             <span style="font-size:1.2rem;">💳</span>
             <span>₹${this.currentUser.walletBalance || 0}</span>
          </div>
-         <button class="btn btn-primary" style="padding:10px 20px; font-size:0.9rem;" onclick="app.showView('view-student-dashboard')">Add Credit</button>
+         <button class="btn btn-primary" style="padding:10px 20px; font-size:0.9rem;" onclick="app.showView('studentDashboard')">Add Credit</button>
          <div class="avatar-circle" onclick="if(confirm('Logout?')) app.logout()" title="Logout" style="background:var(--gray-200); color:var(--secondary); border:none;">
             ${(this.currentUser.name || 'U').charAt(0).toUpperCase()}
          </div>
@@ -885,8 +899,8 @@ const app = {
        `;
     } else {
        navActions.innerHTML = `
-         <button class="btn btn-outline" onclick="app.toggleCookFormMode('login'); app.showView('view-cook-auth')">I'm a Cook</button>
-         <button class="btn btn-primary" onclick="app.toggleAuthMode('login'); app.showView('view-student-auth')">Student Login</button>
+         <button class="btn btn-outline" onclick="app.toggleCookFormMode('login'); app.showView('cookLogin')">I'm a Cook</button>
+         <button class="btn btn-primary" onclick="app.toggleAuthMode('login'); app.showView('studentLogin')">Student Login</button>
        `;
     }
   }

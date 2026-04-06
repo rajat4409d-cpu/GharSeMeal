@@ -8,27 +8,31 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
   <!-- GLOBAL NAVBAR -->
   <header class="global-header">
-    <a href="#" class="brand-logo" onclick="app.showView('view-landing')">GharSeMeal</a>
+    <a href="#" class="brand-logo" onclick="app.showView('landing')">GharSeMeal</a>
     <nav class="header-nav" id="global-nav-links">
-       <a href="#" onclick="app.showView('view-landing')">Home</a>
+       <a href="#" onclick="app.showView('landing')">Home</a>
        <a href="#">About Us</a>
        <a href="#">How it Works</a>
        <a href="#">Contact</a>
     </nav>
     <div class="header-actions" id="global-nav-actions">
-       <button class="btn btn-outline" onclick="app.toggleCookFormMode('login'); app.showView('view-cook-auth')">I'm a Cook</button>
-       <button class="btn btn-primary" onclick="app.toggleAuthMode('login'); app.showView('view-student-auth')">Student Login</button>
+       <button class="btn btn-outline" onclick="app.showView('cookLogin')">I'm a Cook</button>
+       <button class="btn btn-primary" onclick="app.showView('studentLogin')">Student Login</button>
     </div>
   </header>
 
   <!-- LANDING PAGE -->
-  <section id="view-landing" class="view active">
+  <section id="landing" class="view active">
     <!-- Hero Split -->
     <div class="landing-split">
       <div class="landing-left">
@@ -36,8 +40,8 @@
         <h1 class="hero-h1">Ghar Jaisa Khana,<br><i style="color:var(--primary);">Ghar Ke Paas</i></h1>
         <p class="hero-subtitle">Born from a real problem — bad PG food and an amazing aunty next door. GharSeMeal connects students to home chefs natively in their neighbourhood.</p>
         <div style="display:flex; gap:15px;">
-           <button class="btn btn-primary" onclick="app.toggleAuthMode('signup'); app.showView('view-student-auth')">I'm a Student</button>
-           <button class="btn btn-outline" onclick="app.toggleCookFormMode('signup'); app.showView('view-cook-auth')">I'm a Cook</button>
+           <button class="btn btn-primary" onclick="app.showView('studentLogin')">I'm a Student</button>
+           <button class="btn btn-outline" onclick="app.showView('cookLogin')">I'm a Cook</button>
         </div>
       </div>
       <div class="landing-right">
@@ -78,7 +82,7 @@
   </section>
 
   <!-- STUDENT AUTH -->
-  <section id="view-student-auth" class="view">
+  <section id="studentLogin" class="view">
     <div class="auth-split">
       <div class="auth-left">
          <h1 style="font-size:3rem; margin-bottom:20px;">GharSeMeal</h1>
@@ -127,15 +131,15 @@
   </section>
 
   <!-- STUDENT DASHBOARD -->
-  <section id="view-student-dashboard" class="view">
+  <section id="studentDashboard" class="view">
     <div class="dashboard-layout">
       <!-- Left Sidebar -->
       <div class="left-sidebar">
          <div class="badge" style="margin-bottom:15px; text-align:center;">Student Portal</div>
-         <a href="#" class="sidebar-link active"><span>📊</span> Dashboard</a>
-         <a href="#" class="sidebar-link"><span>📋</span> My Bookings</a>
-         <a href="#" class="sidebar-link" onclick="app.showView('view-student-tracker')"><span>📅</span> Meal Tracker</a>
-         <a href="#" class="sidebar-link"><span>💳</span> Wallet</a>
+         <a href="#" class="sidebar-link active" onclick="app.showView('studentDashboard')"><span>📊</span> Dashboard</a>
+         <a href="#" class="sidebar-link" onclick="app.showView('bookings')"><span>📋</span> My Bookings</a>
+         <a href="#" class="sidebar-link" onclick="app.showView('mealTracker')"><span>📅</span> Meal Tracker</a>
+         <a href="#" class="sidebar-link" onclick="app.showView('wallet')"><span>💳</span> Wallet</a>
          <a href="#" class="sidebar-link"><span>⚙️</span> Settings</a>
       </div>
 
@@ -145,22 +149,22 @@
          <p style="color:var(--gray-500); margin-bottom:25px; font-weight:500;">Ready to order some delicious home-cooked food?</p>
          
          <div class="stats-row" id="student-stats-bar">
-            <div class="stat-pill">
-               <div style="font-size:2rem;">🍱</div>
+            <div class="stat-pill" style="padding: 20px 25px;">
+               <div style="font-size:32px;">🍱</div>
                <div>
                   <div style="font-size:1.5rem; font-weight:800; color:var(--secondary);" id="stat-meals">0</div>
                   <div style="font-size:0.8rem; color:var(--gray-500); font-weight:700; text-transform:uppercase;">Meals Eaten</div>
                </div>
             </div>
-            <div class="stat-pill">
-               <div style="font-size:2rem;">💰</div>
+            <div class="stat-pill" style="padding: 20px 25px;">
+               <div style="font-size:32px;">💰</div>
                <div>
                   <div style="font-size:1.5rem; font-weight:800; color:var(--primary);">₹<span id="stat-saved">0</span></div>
                   <div style="font-size:0.8rem; color:var(--gray-500); font-weight:700; text-transform:uppercase;">Saved vs Zomato</div>
                </div>
             </div>
-            <div class="stat-pill">
-               <div style="font-size:2rem;">🏃</div>
+            <div class="stat-pill" style="padding: 20px 25px;">
+               <div style="font-size:32px;">🏃</div>
                <div>
                   <div style="font-size:1.5rem; font-weight:800; color:var(--secondary);" id="stat-runner">0</div>
                   <div style="font-size:0.8rem; color:var(--gray-500); font-weight:700; text-transform:uppercase;">Runner Badge</div>
@@ -168,7 +172,7 @@
             </div>
          </div>
          
-         <div class="map-card" id="leaflet-map"></div>
+         <div class="map-card" id="map" style="height: 350px;"></div>
 
          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h2 style="font-size:1.8rem;">Nearby Home-Chefs</h2>
@@ -189,7 +193,7 @@
 
       <!-- Right Sidebar -->
       <div class="right-sidebar">
-         <div class="card" style="background:var(--secondary); color:white; cursor:pointer;" onclick="app.showView('view-premium-upgrade')">
+         <div class="card" style="background:var(--secondary); color:white; cursor:pointer;" onclick="app.showView('premiumUpgrade')">
             <div class="badge" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:10px; display:inline-block;">PRO STUDENT</div>
             <h3 style="font-size:1.3rem; margin-bottom:5px;">Upgrade to Premium</h3>
             <p style="font-size:0.9rem; opacity:0.8;">₹49/month • Priority Booking</p>
@@ -224,7 +228,7 @@
   </section>
 
   <!-- COOK PROFILE -->
-  <section id="view-cook-profile" class="view">
+  <section id="cookProfile" class="view">
     <div class="profile-hero"></div>
     <div class="profile-container">
        
@@ -245,7 +249,7 @@
                </div>
                <div style="display:flex; gap:15px; padding-bottom:10px;">
                   <button class="btn btn-outline" style="border-color:#10B981; color:#10B981; display:flex; gap:8px; align-items:center;" onclick="window.open('https://wa.me/919999999999','_blank')"><span>💬</span> WhatsApp</button>
-                  <button class="btn btn-primary" onclick="app.showBookingForm()">Book a Meal</button>
+                  <button class="btn btn-primary" onclick="app.showView('booking')">Book a Meal</button>
                </div>
              </div>
           </div>
@@ -276,7 +280,7 @@
              <div class="badge" style="position:absolute; top:-12px; right:20px; background:var(--primary); color:white;">POPULAR</div>
              <h3 style="font-size:1.4rem; margin-bottom:20px; border-bottom:1px solid var(--gray-200); padding-bottom:15px;">Subscription Plans</h3>
              
-             <div style="margin-bottom:20px; cursor:pointer; padding:15px; border-radius:12px; border:1px solid var(--primary); background:rgba(232,71,10,0.05);" onclick="document.getElementById('booking-plan-route').value='week'; app.showBookingForm()">
+             <div style="margin-bottom:20px; cursor:pointer; padding:15px; border-radius:12px; border:1px solid var(--primary); background:rgba(232,71,10,0.05);" onclick="document.getElementById('booking-plan-route').value='week'; app.showView('booking')">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                    <div style="font-weight:800;">Weekly Plan</div>
                    <div style="color:var(--primary); font-weight:800;">10% OFF</div>
@@ -284,7 +288,7 @@
                 <p style="font-size:0.85rem; color:var(--gray-500);">7 days flexible schedule. Pick your days.</p>
              </div>
 
-             <div style="cursor:pointer; padding:15px; border-radius:12px; border:1px solid var(--gray-200);" onclick="document.getElementById('booking-plan-route').value='meal'; app.showBookingForm()">
+             <div style="cursor:pointer; padding:15px; border-radius:12px; border:1px solid var(--gray-200);" onclick="document.getElementById('booking-plan-route').value='meal'; app.showView('booking')">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                    <div style="font-weight:800;">Standard Meal</div>
                    <div style="color:var(--secondary); font-weight:800;" id="cp-price">₹0</div>
@@ -298,13 +302,13 @@
   </section>
 
   <!-- BOOKING CONFIG -->
-  <section id="view-booking" class="view">
+  <section id="booking" class="view">
     <div style="max-width:1000px; margin:40px auto; width:100%;">
-       <button class="btn btn-outline" style="margin-bottom:20px; border:none;" onclick="app.showView('view-cook-profile')">← Back to Profile</button>
+       <button class="btn btn-outline" style="margin-bottom:20px; border:none;" onclick="app.showView('cookProfile')">← Back to Profile</button>
        <h1 style="font-size:2.5rem; margin-bottom:10px;">Configure Your Meal Plan</h1>
        <div id="booking-details" style="font-size:1.1rem; color:var(--primary); font-weight:700; margin-bottom:30px;">Ordering from: Cook Name</div>
        
-       <form onsubmit="app.handleBookingSubmit(event)">
+       <form onsubmit="app.confirmBooking(event)">
           <div class="card" style="margin-bottom:30px;">
              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;">
                 <div class="form-group" style="margin:0;">
@@ -380,7 +384,7 @@
   </section>
 
   <!-- CONFIRMATION PAGE -->
-  <section id="view-booking-success" class="view">
+  <section id="booking-success" class="view">
     <div style="text-align:center; padding:60px 20px;">
        <div style="width:100px; height:100px; background:#10B981; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:4rem; margin:0 auto 30px;">✓</div>
        <h1 style="font-size:3rem; margin-bottom:40px; color:var(--secondary);">Booking Confirmed!</h1>
@@ -405,18 +409,18 @@
        </div>
 
        <div style="margin-top:50px; display:flex; justify-content:center; gap:20px;">
-          <button class="btn btn-primary" onclick="app.showView('view-student-tracker')" style="padding:15px 40px; font-size:1.1rem;">View Meal Tracker</button>
-          <button class="btn btn-outline" onclick="app.showView('view-student-dashboard')" style="padding:15px 40px; font-size:1.1rem;">Back to Home</button>
+          <button class="btn btn-primary" onclick="app.showView('mealTracker')" style="padding:15px 40px; font-size:1.1rem;">View Meal Tracker</button>
+          <button class="btn btn-outline" onclick="app.showView('studentDashboard')" style="padding:15px 40px; font-size:1.1rem;">Back to Home</button>
        </div>
     </div>
   </section>
 
   <!-- MEAL TRACKER -->
-  <section id="view-student-tracker" class="view">
+  <section id="mealTracker" class="view">
     <div style="max-width:1400px; margin:40px auto; width:100%;">
        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:40px;">
           <div>
-             <button class="btn btn-outline" style="margin-bottom:10px; border:none; padding:0;" onclick="app.showView('view-student-dashboard')">← Dashboard</button>
+             <button class="btn btn-outline" style="margin-bottom:10px; border:none; padding:0;" onclick="app.showView('studentDashboard')">← Dashboard</button>
              <h1 style="font-size:2.5rem;">Weekly Meal Tracker</h1>
              <p style="font-weight:600; color:var(--gray-500);">Current Week: Nov 14 - Nov 20</p>
           </div>
@@ -447,7 +451,7 @@
   </section>
 
   <!-- COOK AUTH WIZARD -->
-  <section id="view-cook-auth" class="view">
+  <section id="cookLogin" class="view">
     <div class="auth-split">
       <div class="auth-left" style="background:var(--secondary);">
          <div class="badge" style="background:rgba(255,255,255,0.1); color:white; display:inline-block; margin-bottom:20px;">FOR HOME CHEFS</div>
@@ -532,17 +536,17 @@
   </section>
 
   <!-- COOK DASHBOARD -->
-  <section id="view-cook-dashboard" class="view">
+  <section id="cookDashboard" class="view">
     <div class="dashboard-layout">
        <div class="left-sidebar">
          <div class="badge" style="margin-bottom:15px; text-align:center;">Chef Central</div>
          <div class="card" style="padding:15px; margin-bottom:15px; text-align:center; background:rgba(16,185,129,0.1); border:1px solid #10B981; color:#10B981;">
             <div style="font-weight:800; font-size:1.1rem;">● KITCHEN OPEN</div>
          </div>
-         <a href="#" class="sidebar-link active"><span>📊</span> Dashboard</a>
-         <a href="#" class="sidebar-link"><span>🍳</span> My Menu</a>
-         <a href="#" class="sidebar-link"><span>💰</span> Earnings</a>
-         <a href="#" class="sidebar-link"><span>📦</span> Past Orders</a>
+         <a href="#" class="sidebar-link active" onclick="app.showView('cookDashboard')"><span>📊</span> Dashboard</a>
+         <a href="#" class="sidebar-link" onclick="app.showView('cookDashboard')"><span>🍳</span> My Menu</a>
+         <a href="#" class="sidebar-link" onclick="app.showView('cookDashboard')"><span>💰</span> Earnings</a>
+         <a href="#" class="sidebar-link" onclick="app.showView('cookDashboard')"><span>📦</span> Past Orders</a>
       </div>
 
       <div class="main-content">
@@ -590,9 +594,9 @@
   </section>
 
   <!-- SUBSCRIPTION UPGRADE -->
-  <section id="view-premium-upgrade" class="view">
+  <section id="premiumUpgrade" class="view">
     <div style="max-width:900px; margin:40px auto; width:100%; text-align:center;">
-       <button class="btn btn-outline" style="margin-bottom:20px; border:none;" onclick="app.showView('view-student-dashboard')">← Return</button>
+       <button class="btn btn-outline" style="margin-bottom:20px; border:none;" onclick="app.showView('studentDashboard')">← Return</button>
        <div style="font-size:0.9rem; color:var(--gray-500); font-weight:800; letter-spacing:2px; margin-bottom:10px;">ELEVATE YOUR DINING</div>
        <h1 style="font-size:3rem; margin-bottom:60px;">The Modern Hearth<br>Subscription Plans</h1>
 
@@ -671,6 +675,9 @@
     </div>
   </footer>
 
+  <section id="bookings" class="view"><div style="padding:40px; font-size:2rem; text-align:center;"><h2>My Bookings</h2><p>Feature in development.</p></div></section>
+  <section id="wallet" class="view"><div style="padding:40px; font-size:2rem; text-align:center;"><h2>Wallet</h2><p>Feature in development.</p></div></section>
+  <section id="settings" class="view"><div style="padding:40px; font-size:2rem; text-align:center;"><h2>Settings</h2><p>Feature in development.</p></div></section>
   <script src="app.js"></script>
 </body>
 </html>

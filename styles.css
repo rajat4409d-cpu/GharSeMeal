@@ -330,8 +330,8 @@ label {
   gap: 12px;
   box-shadow: var(--shadow);
 }
-.map-card {
-  height: 300px;
+#map {
+  height: 350px;
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 30px;
