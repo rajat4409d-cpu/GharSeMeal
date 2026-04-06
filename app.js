@@ -440,7 +440,8 @@ const app = {
       return;
     }
     
-    this.wizardDishes.push({ name: dishName, type: typeInput.value });
+    const titleCaseDish = dishName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+    this.wizardDishes.push({ name: titleCaseDish, type: typeInput.value });
     dishInput.value = '';
     
     const listHtml = this.wizardDishes.map((d) => `<li style="margin-bottom:8px;">${d.name} <span style="font-size:0.8rem; opacity:0.8; margin-left:5px;">(${d.type})</span></li>`).join('');
@@ -563,26 +564,29 @@ const app = {
     
     const ordersItem = JSON.parse(localStorage.getItem(DB_ORDERS_KEY)) || [];
     let todayE = 0;
-    let totalE = 0;
+    let weekE = 0;
+    let ordersToday = 0;
     
     const todayStr = new Date().toISOString().split('T')[0];
     
     ordersItem.forEach(o => {
-      const c = cooks.find(ck => ck.id === parseInt(o.cookId));
+      const c = cooks.find(ck => ck.id === parseInt(o.cookId) || ck.name === o.cookName);
       if(c && c.name === this.currentUser?.name && o.status === 'Accepted') {
          let amt = parseInt(c.price);
          if (o.plan === 'week') amt = (amt * 7) * 0.9;
          if (o.isRunner === true || o.isRunner === 'true') amt = 0;
          
-         totalE += amt;
+         weekE += amt; // Mock data assumes existing orders belong to this week
          if (o.date === todayStr || !o.date) {
             todayE += amt;
+            ordersToday++;
          }
       }
     });
     
     document.getElementById('cook-earn-today').textContent = todayE.toFixed(0);
-    document.getElementById('cook-earn-week').textContent = totalE.toFixed(0);
+    document.getElementById('cook-earn-week').textContent = weekE.toFixed(0);
+    document.getElementById('cook-orders-today').textContent = ordersToday;
   },
 
   renderManageMenu() {
