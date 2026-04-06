@@ -54,7 +54,19 @@ const app = {
     // Scaffold DB
     if (!localStorage.getItem(DB_COOKS_KEY)) {
       localStorage.setItem(DB_COOKS_KEY, JSON.stringify(initialCooks));
+    } else {
+      const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
+      const uniqueCooks = [];
+      const seen = new Set();
+      for (const c of cooks) {
+        if (!seen.has(c.name)) {
+          uniqueCooks.push(c);
+          seen.add(c.name);
+        }
+      }
+      localStorage.setItem(DB_COOKS_KEY, JSON.stringify(uniqueCooks));
     }
+    
     if (!localStorage.getItem(DB_ORDERS_KEY)) {
       localStorage.setItem(DB_ORDERS_KEY, JSON.stringify([]));
     }
@@ -121,19 +133,21 @@ const app = {
         
         // Auto-add new cook to the cooks DB
         const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-        cooks.push({
-          id: newUser.id,
-          name: newUser.name,
-          cuisine: newUser.cuisine || "Specialty foods",
-          price: 100,
-          rating: 5.0,
-          hygiene: 100,
-          lat: 28.6130 + (Math.random() * 0.01),
-          lon: 77.2000 + (Math.random() * 0.01),
-          menu: [],
-          recommended: false
-        });
-        localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+        if (!cooks.find(c => c.name === newUser.name)) {
+          cooks.push({
+            id: newUser.id,
+            name: newUser.name,
+            cuisine: newUser.cuisine || "Specialty foods",
+            price: 100,
+            rating: 5.0,
+            hygiene: 100,
+            lat: 28.6130 + (Math.random() * 0.01),
+            lon: 77.2000 + (Math.random() * 0.01),
+            menu: [],
+            recommended: false
+          });
+          localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+        }
       }
       
       users.push(newUser);
@@ -408,8 +422,17 @@ const app = {
     orders.push(order);
     localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
     
-    alert(`Success! Meal booked at ${cook.name} for ${time}!\n\n(Saved to LocalStorage)`);
-    this.showView('view-student-dashboard');
+    const orderIdCode = order.id.toString().slice(-4);
+    document.getElementById('success-cook').textContent = cook.name;
+    document.getElementById('success-meal').textContent = document.getElementById('b-meal-type').value.toUpperCase();
+    document.getElementById('success-time').textContent = time;
+    document.getElementById('success-date').textContent = date;
+    document.getElementById('success-code').textContent = '#' + orderIdCode;
+    
+    let totalText = document.getElementById('b-total-amount').textContent;
+    document.getElementById('success-total').textContent = totalText;
+    
+    this.showView('view-booking-success');
   },
 
   initCookDashboard() {

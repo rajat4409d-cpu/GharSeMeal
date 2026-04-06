@@ -291,6 +291,32 @@
       </div>
     </section>
 
+    <!-- BOOKING SUCCESS -->
+    <section id="view-booking-success" class="view">
+      <div class="landing-content" style="background: var(--off-white); color: var(--navy); padding-top:40px; justify-content: flex-start;">
+        <div style="font-size: 4.5rem; color: #10B981; margin-bottom: 5px;">✅</div>
+        <h2 style="font-size: 1.8rem; margin-bottom: 5px;">Booking Confirmed!</h2>
+        <p style="color: var(--gray-500); margin-bottom: 30px; font-weight:500;">Your meal is successfully scheduled.</p>
+        
+        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: var(--shadow); width: 100%; max-width: 350px; text-align: left; margin-bottom:30px;">
+          <p style="margin-bottom: 10px;"><strong>👨‍🍳 Cook:</strong> <span id="success-cook">Aunty Sarita</span></p>
+          <p style="margin-bottom: 10px;"><strong>🍱 Meal:</strong> <span id="success-meal">Lunch</span></p>
+          <p style="margin-bottom: 10px;"><strong>🕛 Time:</strong> <span id="success-time">1:00 PM</span> (<span id="success-date">2026-04-06</span>)</p>
+          <hr style="border: 0; border-top: 1px solid var(--gray-200); margin: 20px 0;">
+          <div style="text-align: center; background: var(--off-white); padding: 20px; border-radius: 8px; border: 1px dashed var(--gray-500); margin-bottom: 20px;">
+            <p style="font-size: 0.85rem; color: var(--gray-500); margin-bottom: 5px; font-weight:bold;">Show this code to the cook</p>
+            <h1 style="font-size: 3rem; letter-spacing: 2px; color: var(--saffron); margin: 0;" id="success-code">#4821</h1>
+          </div>
+          <p style="text-align: center; font-size: 1.2rem; font-weight: bold; margin-bottom: 0;">Total Paid: <span id="success-total" style="color: var(--saffron);">₹80</span></p>
+        </div>
+
+        <div style="width: 100%; max-width: 350px;">
+          <button class="btn btn-primary w-100" style="margin-bottom: 15px;" onclick="app.showView('view-student-tracker')">📅 View Meal Tracker</button>
+          <button class="btn btn-secondary w-100" onclick="app.showView('view-student-dashboard')">🏠 Back to Home</button>
+        </div>
+      </div>
+    </section>
+
     <!-- COOK DASHBOARD -->
     <section id="view-cook-dashboard" class="view">
       <header class="app-header">
