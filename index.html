@@ -113,44 +113,81 @@
     <section id="view-cook-auth" class="view">
       <header class="app-header">
         <button class="btn-icon" onclick="app.showView('view-landing')">← Back</button>
-        <h2>Cook Access</h2>
+        <h2>For Home Chefs</h2>
       </header>
-      <div class="content-padding auth-wrapper">
-        <div class="auth-card">
-          <h3 id="cook-auth-title" style="margin-bottom: 20px; color: var(--navy); text-align: center;">Login to your account</h3>
-          <form id="cook-auth-form" onsubmit="app.handleAuth(event, 'cook')">
-            <div class="form-group">
-              <label>Name / Kitchen Name</label>
-              <input type="text" id="auth-c-name" required placeholder="e.g. Aunty Sarita">
-            </div>
-            
-            <div id="cook-signup-fields" style="display: none;">
-              <div class="form-group">
-                <label>Address</label>
-                <input type="text" id="auth-c-address" placeholder="House No. 12, Area...">
-              </div>
+      <div class="content-padding auth-wrapper" style="align-items:flex-start;">
+        <div class="auth-card" id="cook-auth-container">
+          
+          <!-- Login View -->
+          <div id="cook-login-view">
+            <h3 style="margin-bottom: 20px; color: var(--navy); text-align: center;">Login to your account</h3>
+            <form onsubmit="app.handleCookLogin(event)">
               <div class="form-group">
                 <label>Phone Number</label>
-                <input type="tel" id="auth-c-phone" placeholder="9876543210">
+                <input type="tel" id="cl-phone" required placeholder="Your registered number">
               </div>
               <div class="form-group">
-                <label>Cuisine Type</label>
-                <input type="text" id="auth-c-cuisine" placeholder="North Indian, South...">
+                <label>Password</label>
+                <input type="password" id="cl-pwd" required placeholder="Enter password">
               </div>
+              <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+            <div class="auth-toggle">
+              Want to become a GharSeMeal chef? <a href="#" onclick="app.toggleCookFormMode('signup')">Sign Up</a>
             </div>
-
-            <div class="form-group">
-              <label>Password</label>
-              <input type="password" id="auth-c-pass" required placeholder="Enter password">
+          </div>
+          
+          <!-- Signup Wizard View -->
+          <div id="cook-signup-view" style="display:none;">
+            <h3 style="text-align:center; color:var(--navy); margin-bottom: 5px;">Become a Chef</h3>
+            
+            <!-- STEP 1 -->
+            <div id="cs-step-1">
+              <p style="text-align:center; font-size:0.85rem; color:var(--gray-500); margin-bottom: 20px;">Step 1 of 3: Basic Info</p>
+              <div class="form-group"><label>Kitchen Name (or Your Name)</label><input type="text" id="cs-kname" required></div>
+              <div class="form-group"><label>Your Full Name</label><input type="text" id="cs-name" required></div>
+              <div class="form-group"><label>Locality / Area</label><input type="text" id="cs-area" required></div>
+              <div class="form-group"><label>Phone Number</label><input type="tel" id="cs-phone" required></div>
+              <div class="form-group"><label>Years of Cooking Experience</label><input type="number" id="cs-exp" required min="0"></div>
+              <div class="form-group"><label>Password</label><input type="password" id="cs-pwd" required></div>
+              <button class="btn btn-primary w-100" onclick="app.cookWizardNext(2)">Next: Menu Setup →</button>
+              <div class="auth-toggle" style="margin-top:15px;">Already have an account? <a href="#" onclick="app.toggleCookFormMode('login')">Login</a></div>
             </div>
             
-            <button type="submit" class="btn btn-primary w-100" id="cook-auth-btn">Login</button>
-          </form>
-          
-          <div class="auth-toggle">
-            <span id="cook-toggle-text">Don't have an account?</span> 
-            <a href="#" onclick="app.toggleAuthMode('cook')"><span id="cook-toggle-link">Sign up</span></a>
+            <!-- STEP 2 -->
+            <div id="cs-step-2" style="display:none;">
+              <p style="text-align:center; font-size:0.85rem; color:var(--gray-500); margin-bottom: 20px;">Step 2 of 3: Menu Setup</p>
+              <div class="form-group">
+                <label>Add up to 5 dishes (e.g. Rajma Chawal)</label>
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                  <input type="text" id="cs-newdish-name" placeholder="Dish Name" style="flex:2;">
+                  <select id="cs-newdish-type" style="flex:1;">
+                    <option value="Veg">Veg 🟢</option>
+                    <option value="Non-Veg">Non-Veg 🔴</option>
+                  </select>
+                </div>
+                <button class="btn btn-secondary w-100" style="padding:10px; font-size:0.9rem;" onclick="app.addDishToWizard()">+ Add Dish</button>
+              </div>
+              <ul id="cs-dish-list" style="margin-bottom:20px; font-size:0.9rem; padding-left:20px; color:var(--gray-800);"></ul>
+              <div class="form-group"><label>Standard Price per Meal (₹)</label><input type="number" id="cs-price" required></div>
+              <div class="form-group"><label>10% Weekly Discount Promo?</label><select id="cs-weekly"><option value="yes">Yes, offer to students</option><option value="no">No</option></select></div>
+              <div style="display:flex; gap:10px;">
+                <button class="btn w-100" style="background:var(--gray-200);" onclick="app.cookWizardNext(1)">← Back</button>
+                <button class="btn btn-primary w-100" onclick="app.cookWizardNext(3)">Next: Preview →</button>
+              </div>
+            </div>
+            
+            <!-- STEP 3 -->
+            <div id="cs-step-3" style="display:none;">
+              <p style="text-align:center; font-size:0.85rem; color:var(--gray-500); margin-bottom: 20px;">Step 3 of 3: Layout Preview</p>
+              <div id="cs-preview-card" style="margin-bottom:25px;"></div>
+              <div style="display:flex; gap:10px;">
+                <button class="btn w-100" style="background:var(--gray-200);" onclick="app.cookWizardNext(2)">← Edit</button>
+                <button class="btn btn-primary w-100" style="background:#10B981;" onclick="app.submitCookSignup()">Go Live! 🚀</button>
+              </div>
+            </div>
           </div>
+          
         </div>
       </div>
     </section>

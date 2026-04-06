@@ -126,28 +126,6 @@ const app = {
       if (role === 'student') {
         newUser.college = document.getElementById(`${prefix}-college`).value.trim();
         newUser.address = document.getElementById(`${prefix}-address`).value.trim();
-      } else {
-        newUser.address = document.getElementById(`${prefix}-address`).value.trim();
-        newUser.phone = document.getElementById(`${prefix}-phone`).value.trim();
-        newUser.cuisine = document.getElementById(`${prefix}-cuisine`).value.trim();
-        
-        // Auto-add new cook to the cooks DB
-        const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-        if (!cooks.find(c => c.name === newUser.name)) {
-          cooks.push({
-            id: newUser.id,
-            name: newUser.name,
-            cuisine: newUser.cuisine || "Specialty foods",
-            price: 100,
-            rating: 5.0,
-            hygiene: 100,
-            lat: 28.6130 + (Math.random() * 0.01),
-            lon: 77.2000 + (Math.random() * 0.01),
-            menu: [],
-            recommended: false
-          });
-          localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
-        }
       }
       
       users.push(newUser);
@@ -310,6 +288,7 @@ const app = {
         </ul>
         <h3 style="margin-bottom: 20px;">Price: ₹${cook.price}/meal</h3>
         <button class="btn btn-primary w-100" onclick="app.showBookingForm()">Book a Meal</button>
+        <a href="https://wa.me/91${cook.phone || '000000000'}" target="_blank" class="btn btn-secondary w-100" style="margin-top:15px; background:#25D366; color:white; display:flex; justify-content:center; align-items:center; gap:8px; text-decoration:none;">🟢 Contact on WhatsApp</a>
         
         <div style="margin-top: 30px;">
           <h4 style="margin-bottom: 15px; color: var(--navy);">Student Reviews</h4>
@@ -435,9 +414,175 @@ const app = {
     this.showView('view-booking-success');
   },
 
+  wizardDishes: [],
+
+  toggleCookFormMode(mode) {
+    if (mode === 'login') {
+      document.getElementById('cook-login-view').style.display = 'block';
+      document.getElementById('cook-signup-view').style.display = 'none';
+    } else {
+      document.getElementById('cook-login-view').style.display = 'none';
+      document.getElementById('cook-signup-view').style.display = 'block';
+      this.wizardDishes = [];
+      document.getElementById('cs-dish-list').innerHTML = '';
+      this.cookWizardNext(1);
+    }
+  },
+
+  addDishToWizard() {
+    const dishInput = document.getElementById('cs-newdish-name');
+    const typeInput = document.getElementById('cs-newdish-type');
+    const dishName = dishInput.value.trim();
+    if (!dishName) return;
+    
+    if (this.wizardDishes.length >= 5) {
+      alert("You can only add up to 5 dishes initially.");
+      return;
+    }
+    
+    this.wizardDishes.push({ name: dishName, type: typeInput.value });
+    dishInput.value = '';
+    
+    const listHtml = this.wizardDishes.map((d) => `<li style="margin-bottom:8px;">${d.name} <span style="font-size:0.8rem; opacity:0.8; margin-left:5px;">(${d.type})</span></li>`).join('');
+    document.getElementById('cs-dish-list').innerHTML = listHtml;
+  },
+
+  cookWizardNext(step) {
+    if (step === 2) {
+      const name = document.getElementById('cs-kname').value.trim();
+      const phone = document.getElementById('cs-phone').value.trim();
+      if (!name || !phone) {
+        alert("Please fill Basic Info.");
+        return;
+      }
+    }
+    if (step === 3) {
+      const price = document.getElementById('cs-price').value.trim();
+      if (this.wizardDishes.length === 0 || !price) {
+        alert("Please add at least 1 dish and set a price.");
+        return;
+      }
+      this.renderCookPreview();
+    }
+    
+    document.getElementById('cs-step-1').style.display = step === 1 ? 'block' : 'none';
+    document.getElementById('cs-step-2').style.display = step === 2 ? 'block' : 'none';
+    document.getElementById('cs-step-3').style.display = step === 3 ? 'block' : 'none';
+  },
+
+  renderCookPreview() {
+    const kName = document.getElementById('cs-kname').value;
+    const price = document.getElementById('cs-price').value;
+    const area = document.getElementById('cs-area').value;
+    const dishStr = this.wizardDishes.map(d => `${d.name} ${d.type==='Veg'?'🟢':'🔴'}`).join(', ');
+    
+    document.getElementById('cs-preview-card').innerHTML = `
+      <div class="cook-card" style="pointer-events:none;">
+        <div class="cook-header">
+           <div class="cook-name">${kName}</div>
+           <div class="cook-rating">★ 5.0</div>
+        </div>
+        <div class="cook-cuisine" style="color:var(--gray-800);">${dishStr}</div>
+        <div class="cook-cuisine">Locality: ${area} | Hygiene Score: 100%</div>
+        <div class="cook-footer">
+           <div class="cook-price">₹${price} <span style="font-size:0.8rem; font-weight:normal;">/ meal</span></div>
+           <button class="btn btn-secondary" style="padding: 8px 16px;">View Menu</button>
+        </div>
+      </div>
+    `;
+  },
+
+  submitCookSignup() {
+    const kName = document.getElementById('cs-kname').value.trim();
+    const fullName = document.getElementById('cs-name').value.trim();
+    const phone = document.getElementById('cs-phone').value.trim();
+    const area = document.getElementById('cs-area').value.trim();
+    const pass = document.getElementById('cs-pwd').value.trim();
+    const price = parseInt(document.getElementById('cs-price').value);
+    const dishStr = this.wizardDishes.map(d => `${d.name} ${d.type==='Veg'?'🟢':'🔴'}`).join(', ');
+
+    const newCook = {
+      id: Date.now(),
+      role: 'cook',
+      phone: phone,
+      password: pass,
+      name: kName,
+      fullName: fullName,
+      address: area,
+      cuisine: dishStr
+    };
+    
+    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
+    users.push(newCook);
+    localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
+    
+    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
+    cooks.push({
+      id: newCook.id,
+      name: newCook.name,
+      cuisine: dishStr,
+      price: price,
+      phone: phone, // Save mapped phone
+      rating: 5.0,
+      hygiene: 100,
+      lat: 28.6130 + (Math.random() * 0.01),
+      lon: 77.2000 + (Math.random() * 0.01),
+      menu: this.wizardDishes.map(d => `${d.name} (${d.type})`),
+      recommended: false
+    });
+    localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    
+    this.currentUser = newCook;
+    this.showView('view-cook-dashboard');
+  },
+  
+  handleCookLogin(e) {
+    e.preventDefault();
+    const phone = document.getElementById('cl-phone').value.trim();
+    const pass = document.getElementById('cl-pwd').value.trim();
+    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
+    
+    const valid = users.find(u => u.phone === phone && u.password === pass && u.role === 'cook');
+    if (valid) {
+      this.currentUser = valid;
+      this.showView('view-cook-dashboard');
+    } else {
+      alert("Invalid credentials.");
+    }
+  },
+
   initCookDashboard() {
     this.renderOrders();
     this.renderManageMenu();
+    
+    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
+    const me = cooks.find(c => c.name === this.currentUser?.name) || cooks[0];
+    if(me) {
+      document.getElementById('cook-badge').textContent = me.name;
+    }
+    
+    const ordersItem = JSON.parse(localStorage.getItem(DB_ORDERS_KEY)) || [];
+    let todayE = 0;
+    let totalE = 0;
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    ordersItem.forEach(o => {
+      const c = cooks.find(ck => ck.id === parseInt(o.cookId));
+      if(c && c.name === this.currentUser?.name && o.status === 'Accepted') {
+         let amt = parseInt(c.price);
+         if (o.plan === 'week') amt = (amt * 7) * 0.9;
+         if (o.isRunner === true || o.isRunner === 'true') amt = 0;
+         
+         totalE += amt;
+         if (o.date === todayStr || !o.date) {
+            todayE += amt;
+         }
+      }
+    });
+    
+    document.getElementById('cook-earn-today').textContent = todayE.toFixed(0);
+    document.getElementById('cook-earn-week').textContent = totalE.toFixed(0);
   },
 
   renderManageMenu() {
