@@ -1,3 +1,6 @@
+// Use Firebase with local file support
+const isLocalFile = window.location.protocol === 'file:';
+
 const firebaseConfig = {
   apiKey: "AIzaSyCmrT8rF_nmybhxRZL265kHv0zXGgfAoy0",
   authDomain: "gharsemeal-1033a.firebaseapp.com",
@@ -164,7 +167,20 @@ const app = {
          document.getElementById('auth-submit-btn').textContent = "Sign Up";
       })
       .catch(err => {
-         alert(err.message);
+         if (isLocalFile || err.code === 'auth/network-request-failed') {
+            console.warn("Using LocalStorage fallback for Student Signup.");
+            const users = JSON.parse(localStorage.getItem(DB_USERS_KEY) || '[]');
+            const mockUid = 'local_' + Date.now();
+            const newUser = { id: mockUid, name, email, role: 'student', walletBalance: 500, mealsEaten: 0 };
+            users.push(newUser);
+            localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
+            app.currentUser = newUser;
+            app.initStudentDashboard();
+            app.showView('studentDashboard');
+            e.target.reset();
+         } else {
+            alert(err.message);
+         }
          document.getElementById('auth-submit-btn').textContent = "Sign Up";
       });
     } else {
@@ -174,7 +190,20 @@ const app = {
          document.getElementById('auth-submit-btn').textContent = "Login to Dashboard";
       })
       .catch(err => {
-         alert(err.message);
+         if (isLocalFile || err.code === 'auth/network-request-failed') {
+            console.warn("Using LocalStorage fallback for Student Login.");
+            const users = JSON.parse(localStorage.getItem(DB_USERS_KEY) || '[]');
+            const user = users.find(u => u.email === email);
+            if (user) {
+               app.currentUser = user;
+               app.initStudentDashboard();
+               app.showView('studentDashboard');
+            } else {
+               alert("User not found in local backup. Please Sign Up.");
+            }
+         } else {
+            alert(err.message);
+         }
          document.getElementById('auth-submit-btn').textContent = "Login to Dashboard";
       });
     }
@@ -297,7 +326,37 @@ const app = {
                </div>
              </div>
            `;
-           listEl.appendChild(card);
+            listEl.appendChild(card);
+         });
+      })
+      .catch(err => {
+         console.warn("Using LocalStorage fallback for Cook Cards.");
+         const stringCooks = localStorage.getItem(DB_COOKS_KEY);
+         const cooks = stringCooks ? JSON.parse(stringCooks) : initialCooks;
+         if(!stringCooks) localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+         
+         listEl.innerHTML = '';
+         cooks.forEach(cook => {
+            const card = document.createElement('div');
+            card.className = `cook-card ${cook.recommended ? 'recommended' : ''}`;
+            let badgeHtml = cook.recommended ? `<div class="tag-recommended">✦ AI Recommended</div>` : '';
+            card.innerHTML = `
+              <div class="cook-card-banner"></div>
+              ${badgeHtml}
+              <div class="cook-card-content">
+                <div class="cook-header">
+                  <div class="cook-name">${cook.name}</div>
+                  <div class="cook-rating">★ ${cook.rating}</div>
+                </div>
+                <div class="cook-cuisine">${cook.cuisine || ''}</div>
+                <div class="hygiene-badge">Hygiene Score: ${cook.hygiene || 100}%</div>
+                <div class="cook-footer">
+                  <div class="cook-price">₹${cook.price} <span style="font-size:0.8rem; font-weight:normal; color:var(--gray-500);">/ meal</span></div>
+                  <button class="btn btn-primary" onclick="app.showCookProfile('${cook.id}')" style="padding: 10px 20px; font-size:0.9rem;">View Menu</button>
+                </div>
+              </div>
+            `;
+            listEl.appendChild(card);
          });
       });
   },
@@ -345,6 +404,33 @@ const app = {
     document.getElementById('cp-reviews-list').innerHTML = reviewsHtml;
     
     this.showView('cookProfile');
+    })
+    .catch(err => {
+       console.warn("Using LocalStorage fallback for Cook Profile.");
+       const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
+       const cook = cooks.find(c => c.id.toString() === id.toString());
+       if(!cook) return;
+       
+       this.selectedCookId = cook.id;
+       document.getElementById('cp-name').textContent = cook.name;
+       document.getElementById('cp-rating').textContent = cook.rating || 5.0;
+       document.getElementById('cp-avatar').textContent = cook.name.charAt(0);
+       document.getElementById('cp-price').textContent = `₹${cook.price}`;
+       
+       const menuHtml = (cook.menu || []).map(item => `
+        <div class="card" style="padding:15px; display:flex; gap:15px; border:1px solid var(--gray-200); box-shadow:none;">
+           <div style="width:60px; height:60px; background:var(--gray-200); border-radius:12px;"></div>
+           <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                 <div style="font-weight:800; font-size:1.1rem; color:var(--secondary);">${item}</div>
+                 <div style="color:var(--primary); font-weight:700;">₹${cook.price}</div>
+              </div>
+           </div>
+        </div>
+       `).join('');
+       document.getElementById('cp-menu-grid').innerHTML = menuHtml;
+       this.showView('cookProfile');
+    });
   },
 
   submitReview() {
@@ -415,6 +501,48 @@ const app = {
 
       this.showView('booking');
       this.calculateTotal();
+    })
+    .catch(err => {
+       console.warn("Using LocalStorage fallback for showBookingForm.");
+       const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
+       const cook = cooks.find(c => c.id.toString() === this.selectedCookId.toString());
+       if(!cook) return;
+       
+       this.currentCookName = cook.name || 'Cook';
+       this.currentCookPrice = cook.price || 100;
+       
+       const bookingDetails = document.getElementById('booking-details');
+       bookingDetails.innerHTML = `<h4 style="margin-bottom:10px; color: var(--navy);">Ordering from: ${this.currentCookName}</h4><p>Standard Meal Price: ₹${this.currentCookPrice}</p>`;
+       
+       document.getElementById('b-runner').checked = false;
+       document.getElementById('b-plan').value = 'meal';
+       
+       const weeklyList = document.getElementById('b-weekly-list');
+       if (weeklyList) {
+          const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+          weeklyList.innerHTML = days.map(day => {
+            const isSunday = day === 'Sun';
+            return `
+            <div class="booking-day-col">
+              <div style="font-weight:800; color:var(--secondary); font-size:1.1rem; border-bottom:2px solid #E2E4E9; padding-bottom:10px;">${day}</div>
+              <label class="meal-check-slot">
+                <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">BRKFST</span>
+                <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="breakfast" onchange="app.calculateTotal()" ${isSunday ? 'checked' : ''}>
+              </label>
+              <label class="meal-check-slot">
+                <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">LUNCH</span>
+                <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="lunch" onchange="app.calculateTotal()" checked>
+              </label>
+              <label class="meal-check-slot">
+                <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">DINNER</span>
+                <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="dinner" onchange="app.calculateTotal()" checked>
+              </label>
+            </div>
+          `}).join('');
+       }
+
+       this.showView('booking');
+       this.calculateTotal();
     });
   },
 
@@ -468,8 +596,13 @@ const app = {
     
     if(method === 'wallet' && this.currentBookingTotal > 0) {
       if(!this.currentUser || this.currentUser.walletBalance < this.currentBookingTotal) return;
-      db.collection('users').doc(auth.currentUser.uid).update({
+      db.collection('users').doc(auth?.currentUser?.uid || this.currentUser.id).update({
         walletBalance: firebase.firestore.FieldValue.increment(-this.currentBookingTotal)
+      }).catch(err => {
+         if (isLocalFile) {
+            this.currentUser.walletBalance -= this.currentBookingTotal;
+            this.updateCurrentUser();
+         }
       });
     }
 
@@ -503,7 +636,36 @@ const app = {
       document.getElementById('success-total').textContent = totalText;
       
       this.showView('booking-success');
-    }).catch(err => alert(err.message));
+    }).catch(err => {
+       if (isLocalFile || err.code === 'auth/network-request-failed' || err.message.includes('offline')) {
+          console.warn("Using LocalStorage fallback for Bookings.");
+          const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY) || '[]');
+          orders.push({
+             id: Date.now(),
+             studentId: this.currentUser.id,
+             cookId: this.selectedCookId,
+             cookName: this.currentCookName,
+             mealType: plan.toUpperCase(),
+             date,
+             time, plan,
+             totalAmount: this.currentBookingTotal,
+             bookingCode,
+             status: 'Pending',
+             isRunner
+          });
+          localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
+          
+          document.getElementById('success-cook').textContent = this.currentCookName;
+          document.getElementById('success-meal').textContent = plan.toUpperCase();
+          document.getElementById('success-time').textContent = time;
+          document.getElementById('success-date').textContent = date;
+          document.getElementById('success-code').textContent = '#' + bookingCode;
+          document.getElementById('success-total').textContent = document.getElementById('b-total-amount').textContent;
+          this.showView('booking-success');
+       } else {
+          alert("Error: " + err.message);
+       }
+    });
   },
 
   wizardDishes: [],
@@ -612,7 +774,20 @@ const app = {
     .then(() => {
        alert("Live success!");
     })
-    .catch(err => alert(err.message));
+    .catch(err => {
+       if (isLocalFile || err.code === 'auth/network-request-failed') {
+          console.warn("Using LocalStorage fallback for Cook Signup.");
+          const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
+          const newCook = { id: Date.now(), email: userEmail, kitchenName, cookName, name: cookName, area, phone, cuisine, price: pricePerMeal, menu, rating: 5.0, role: 'cook' };
+          cooks.push(newCook);
+          localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+          app.currentUser = newCook;
+          app.initCookDashboard();
+          app.showView('cookDashboard');
+       } else {
+          alert("Error: " + err.message);
+       }
+    });
   },
   
   handleCookLogin(e) {
@@ -624,7 +799,22 @@ const app = {
     .then(() => {
        // state managed by onAuthStateChanged
     })
-    .catch(err => alert(err.message));
+    .catch(err => {
+       if (isLocalFile || err.code === 'auth/network-request-failed') {
+          console.warn("Using LocalStorage fallback for Cook Login.");
+          const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
+          const user = cooks.find(c => c.email === email || c.name === email || c.kitchenName === email);
+          if (user) {
+             app.currentUser = user;
+             app.initCookDashboard();
+             app.showView('cookDashboard');
+          } else {
+             alert("Cook not found in local backup. Please register.");
+          }
+       } else {
+          alert(err.message);
+       }
+    });
   },
 
   initCookDashboard() {
@@ -729,22 +919,57 @@ const app = {
          htmlEl.innerHTML = orders.map(o => `
              <div class="order-card" style="position:relative; margin-bottom: 20px;">
                <p><strong>Booking Code:</strong> #${o.bookingCode || '0000'}</p>
-               <p><strong>Time:</strong> ${o.pickupTime} (${o.date})</p>
-               <p><strong>Plan:</strong> ${(o.planType || 'Meal').toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup</span>' : ''}</p>
+               <p><strong>Time:</strong> ${o.pickupTime || o.time} (${o.date})</p>
+               <p><strong>Plan:</strong> ${(o.planType || o.plan || 'Meal').toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup</span>' : ''}</p>
                
                <div style="margin-top:12px;">
-                 ${o.status === 'pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="app.updateOrderStatus('${o.id}', 'accepted')">Accept Order</button>` : ''}
-                 ${o.status === 'accepted' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#3B82F6;" onclick="app.updateOrderStatus('${o.id}', 'ready')">Mark Ready</button>` : ''}
-                 ${o.status === 'ready' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#10B981;" onclick="app.updateOrderStatus('${o.id}', 'complete')">Mark Complete</button>` : ''}
-                 ${o.status === 'complete' ? `<span style="background: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✅ Completed</span>` : ''}
+                 ${o.status.toLowerCase() === 'pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="app.updateOrderStatus('${o.id}', 'accepted')">Accept Order</button>` : ''}
+                 ${o.status.toLowerCase() === 'accepted' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#3B82F6;" onclick="app.updateOrderStatus('${o.id}', 'ready')">Mark Ready</button>` : ''}
+                 ${o.status.toLowerCase() === 'ready' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#10B981;" onclick="app.updateOrderStatus('${o.id}', 'complete')">Mark Complete</button>` : ''}
+                 ${o.status.toLowerCase() === 'complete' ? `<span style="background: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✅ Completed</span>` : ''}
                </div>
              </div>
          `).join('');
+      }, err => {
+         if (isLocalFile || err.code === 'auth/network-request-failed' || err.message.includes('offline')) {
+            const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY) || '[]');
+            const myOrders = orders.filter(o => o.cookId.toString() === this.currentUser.id.toString());
+            if (myOrders.length === 0) {
+               htmlEl.innerHTML = '<p>No incoming orders yet. (Local Backup)</p>';
+               return;
+            }
+            myOrders.sort((a,b) => b.id - a.id);
+            htmlEl.innerHTML = myOrders.map(o => `
+             <div class="order-card" style="position:relative; margin-bottom: 20px;">
+               <p><strong>Booking Code:</strong> #${o.bookingCode || '0000'}</p>
+               <p><strong>Time:</strong> ${o.pickupTime || o.time} (${o.date})</p>
+               <p><strong>Plan:</strong> ${(o.planType || o.plan || 'Meal').toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup</span>' : ''}</p>
+               <div style="margin-top:12px;">
+                 ${o.status.toLowerCase() === 'pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="app.updateOrderStatus('${o.id}', 'accepted')">Accept Order</button>` : ''}
+                 ${o.status.toLowerCase() === 'accepted' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#3B82F6;" onclick="app.updateOrderStatus('${o.id}', 'ready')">Mark Ready</button>` : ''}
+                 ${o.status.toLowerCase() === 'ready' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#10B981;" onclick="app.updateOrderStatus('${o.id}', 'complete')">Mark Complete</button>` : ''}
+                 ${o.status.toLowerCase() === 'complete' ? `<span style="background: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✅ Completed</span>` : ''}
+               </div>
+             </div>
+            `).join('');
+         }
       });
   },
   
   updateOrderStatus(orderId, newStatus) {
-    db.collection('bookings').doc(orderId).update({ status: newStatus }).catch(err => alert(err.message));
+    db.collection('bookings').doc(orderId).update({ status: newStatus }).catch(err => {
+       if (isLocalFile) {
+          const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY) || '[]');
+          const idx = orders.findIndex(o => o.id.toString() === orderId.toString());
+          if (idx > -1) {
+             orders[idx].status = newStatus;
+             localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
+             this.renderOrders(); // Re-render since we don't have onSnapshot trigger from local storage
+          }
+       } else {
+          alert(err.message);
+       }
+    });
   },
 
   initTrackerView() {
@@ -848,8 +1073,8 @@ const app = {
   },
 
   addWalletFunds(amt) {
-     if(!auth.currentUser) return;
-     db.collection('users').doc(auth.currentUser.uid).update({
+     if(!this.currentUser) return;
+     db.collection('users').doc(auth?.currentUser?.uid || this.currentUser.id).update({
         walletBalance: firebase.firestore.FieldValue.increment(amt)
      }).then(() => {
         alert(`₹${amt} added to Wallet successfully!`);
@@ -858,7 +1083,16 @@ const app = {
         this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: amt, desc: 'Added Funds' });
         this.updateCurrentUser();
         this.showView('studentDashboard');
-     }).catch(err => alert(err.message));
+     }).catch(err => {
+        if (isLocalFile) {
+           alert(`₹${amt} added to Local Wallet successfully!`);
+           this.currentUser.walletBalance += amt;
+           this.currentUser.walletHistory = this.currentUser.walletHistory || [];
+           this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: amt, desc: 'Added Local Funds' });
+           this.updateCurrentUser();
+           this.showView('studentDashboard');
+        } else alert(err.message);
+     });
   },
 
   markMealPickedUp(dayIdx, type) {
@@ -870,10 +1104,18 @@ const app = {
   },
 
   updateCurrentUser() {
-    if (this.currentUser && auth.currentUser) {
+    if (this.currentUser) {
        const collection = this.currentUser.role === 'student' ? 'users' : 'cooks';
-       db.collection(collection).doc(auth.currentUser.uid).set(this.currentUser, { merge: true })
-         .catch(err => console.error(err));
+       db.collection(collection).doc(auth?.currentUser?.uid || this.currentUser.id).set(this.currentUser, { merge: true })
+         .catch(err => {
+            if (isLocalFile) {
+               const key = this.currentUser.role === 'student' ? DB_USERS_KEY : DB_COOKS_KEY;
+               const items = JSON.parse(localStorage.getItem(key) || '[]');
+               const idx = items.findIndex(i => i.id.toString() === this.currentUser.id.toString());
+               if(idx > -1) items[idx] = this.currentUser;
+               localStorage.setItem(key, JSON.stringify(items));
+            }
+         });
     }
     this.updateGlobalHeader();
   },
@@ -910,3 +1152,5 @@ const app = {
 document.addEventListener('DOMContentLoaded', () => {
   app.init();
 });
+
+window.app = app;
