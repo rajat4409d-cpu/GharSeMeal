@@ -1158,3 +1158,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.app = app;
+
+// Bind all methods to the global window object to support any stray static HTML handlers
+Object.keys(app).forEach(key => {
+  if (typeof app[key] === 'function') {
+    window[key] = app[key].bind(app);
+  }
+});
+
+// Explicit aliases requested
+window.addMoney = function(amt) { app.addWalletFunds(amt); };
+window.loginStudent = function(e) { app.handleAuthSubmit(e); };
+window.loginCook = function(e) { app.handleCookLogin(e); };
+window.signupStudent = function(e) { app.handleAuthSubmit(e); };
+window.signupCook = function() { app.handleCookSignup(); };
