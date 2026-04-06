@@ -19,38 +19,38 @@ const DB_USERS_KEY = "gharsemeal_users";// Mock Data
 const initialCooks = [
   {
     id: 1,
-    name: "Aunty Sarita (Sarita's Kitchen)",
-    cuisine: "North Indian • Homestyle",
-    price: 80, // per meal
-    rating: 4.8,
+    name: "Aunty Sarita's Kitchen",
+    cuisine: "North Indian",
+    price: 80,
+    rating: 4.9,
     hygiene: 95,
-    lat: 28.6130, // Random around Delhi center as demo
-    lon: 77.2000,
+    lat: 28.6139,
+    lon: 77.2090,
     menu: ["Dal Makhani", "Jeera Rice", "Roti", "Salad"],
     recommended: true
   },
   {
     id: 2,
-    name: "Meenakshi Ma'am",
-    cuisine: "South Indian Special",
-    price: 90,
-    rating: 4.9,
+    name: "Meenakshi Ma'am's Tiffin",
+    cuisine: "South Indian",
+    price: 70,
+    rating: 4.7,
     hygiene: 98,
-    lat: 28.6145,
-    lon: 77.2050,
+    lat: 28.6200,
+    lon: 77.2150,
     menu: ["Masala Dosa", "Sambar", "Coconut Chutney"],
     recommended: false
   },
   {
     id: 3,
-    name: "Pooja's Tiffin Box",
-    cuisine: "Healthy Bowls • Diet",
-    price: 110,
-    rating: 4.6,
-    hygiene: 90,
-    lat: 28.6110,
-    lon: 77.2020,
-    menu: ["Quinoa Pulao", "Paneer Bhurji", "Curd"],
+    name: "Pooja's Kitchen",
+    cuisine: "Gujarati",
+    price: 75,
+    rating: 4.8,
+    hygiene: 96,
+    lat: 28.6100,
+    lon: 77.2200,
+    menu: ["Dhokla", "Thepla", "Aloo Sabzi"],
     recommended: false
   }
 ];
@@ -269,11 +269,11 @@ const app = {
         radius: 8
       }).addTo(this.map).bindPopup("<b>You are here</b><br>(PG Hostel)");
 
-      const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
+      const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY)) || initialCooks;
       cooks.forEach(cook => {
         L.marker([cook.lat, cook.lon])
           .addTo(this.map)
-          .bindPopup(`<b>${cook.name}</b><br>₹${cook.price}/meal`);
+          .bindPopup(`<b>${cook.name || cook.kitchenName}</b><br>₹${cook.price || cook.pricePerMeal}/meal`);
       });
     }, 100);
   },
@@ -282,7 +282,11 @@ const app = {
     const listEl = document.getElementById('cook-list');
     db.collection('cooks').get()
       .then(snapshot => {
-         const cooks = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+         let cooks = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+         if (cooks.length === 0) {
+            console.warn("Firestore cooks collection empty. Loading seed data fallback.");
+            cooks = initialCooks;
+         }
          listEl.innerHTML = '';
          
          const searchTerm = (document.getElementById('filter-search')?.value || '').toLowerCase();
