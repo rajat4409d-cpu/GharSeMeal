@@ -120,7 +120,22 @@ const app = {
     const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
     listEl.innerHTML = '';
     
-    cooks.forEach(cook => {
+    const searchTerm = (document.getElementById('filter-search')?.value || '').toLowerCase();
+    const filterCuisine = (document.getElementById('filter-cuisine')?.value || '').toLowerCase();
+
+    const filteredCooks = cooks.filter(cook => {
+      const matchSearch = cook.name.toLowerCase().includes(searchTerm) || 
+                          cook.menu.some(m => m.toLowerCase().includes(searchTerm));
+      const matchCuisine = filterCuisine === '' || cook.cuisine.toLowerCase().includes(filterCuisine);
+      return matchSearch && matchCuisine;
+    });
+
+    if (filteredCooks.length === 0) {
+      listEl.innerHTML = '<p style="text-align:center; color:var(--gray-500); padding:20px;">No cooks found matching your criteria.</p>';
+      return;
+    }
+
+    filteredCooks.forEach(cook => {
       const card = document.createElement('div');
       card.className = `cook-card ${cook.recommended ? 'recommended' : ''}`;
       

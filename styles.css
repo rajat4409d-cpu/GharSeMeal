@@ -306,3 +306,72 @@ body {
   margin-bottom: 12px;
   border-left: 4px solid var(--saffron);
 }
+
+/* Premium Banner */
+.premium-banner {
+  background: linear-gradient(90deg, #Fcd34d, var(--saffron));
+  color: var(--navy);
+  padding: 12px 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--gray-200);
+}
+.premium-title {
+  font-weight: 800;
+  font-size: 1rem;
+}
+.premium-subtitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 2px;
+  color: var(--gray-800);
+}
+
+/* Filter Section */
+.cook-list-header {
+  margin-bottom: 15px;
+}
+.filter-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 0 10px;
+  transition: border 0.2s;
+}
+.search-box:focus-within {
+  border-color: var(--saffron);
+}
+.search-box input {
+  border: none;
+  width: 100%;
+  padding: 10px;
+  outline: none;
+  font-size: 0.95rem;
+}
+#filter-cuisine {
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.9rem;
+  background: var(--white);
+  outline: none;
+  cursor: pointer;
+}
+#filter-cuisine:focus {
+  border-color: var(--saffron);
+}
+.cook-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cook-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}

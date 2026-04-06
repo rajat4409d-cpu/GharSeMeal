@@ -32,12 +32,33 @@
         <span class="user-badge" id="student-badge">Free Tier</span>
       </header>
       
+      <div class="premium-banner" onclick="alert('Upgrade to Premium Flow (Mocked)')">
+        <div class="premium-title">🌟 Upgrade to Premium — ₹49/month</div>
+        <div class="premium-subtitle">Unlock verified cooks & priority booking</div>
+      </div>
+
       <div class="map-container">
         <div id="leaflet-map"></div>
       </div>
       
       <div class="content-padding">
-        <h3>Nearby Home-Chefs</h3>
+        <div class="cook-list-header">
+          <h3>Nearby Home-Chefs</h3>
+        </div>
+        
+        <div class="filter-section">
+          <div class="search-box">
+            <span style="opacity: 0.6;">🔍</span>
+            <input type="text" id="filter-search" placeholder="Search cook or dish..." oninput="app.renderCooks()">
+          </div>
+          <select id="filter-cuisine" onchange="app.renderCooks()">
+            <option value="">All Cuisines</option>
+            <option value="north">North Indian</option>
+            <option value="south">South Indian</option>
+            <option value="diet">Diet & Healthy</option>
+          </select>
+        </div>
+
         <div id="cook-list" class="cook-list">
           <!-- Cards injected via JS -->
         </div>
