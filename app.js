@@ -357,6 +357,25 @@ const app = {
     document.getElementById('b-runner').checked = false;
     document.getElementById('b-plan').value = 'meal';
     
+    const weeklyList = document.getElementById('b-weekly-list');
+    if (weeklyList) {
+       const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+       weeklyList.innerHTML = days.map(day => `
+         <div style="display:flex; align-items:center; margin-bottom:8px; background:var(--off-white); padding:10px; border-radius:8px; flex-wrap:wrap;">
+           <div style="width:50px; font-weight:bold; color:var(--navy);">${day}</div>
+           <label style="margin-right:15px; display:flex; align-items:center; gap:7px; cursor:pointer;">
+             <input type="checkbox" class="wk-slot" style="accent-color:var(--saffron); transform:scale(1.2); cursor:pointer;" data-day="${day}" data-slot="breakfast" onchange="app.calculateTotal()"> <span style="padding-top:2px;">Breakfast 8AM</span>
+           </label>
+           <label style="margin-right:15px; display:flex; align-items:center; gap:7px; cursor:pointer;">
+             <input type="checkbox" class="wk-slot" style="accent-color:var(--saffron); transform:scale(1.2); cursor:pointer;" data-day="${day}" data-slot="lunch" onchange="app.calculateTotal()" checked> <span style="padding-top:2px;">Lunch 1PM</span>
+           </label>
+           <label style="display:flex; align-items:center; gap:7px; cursor:pointer;">
+             <input type="checkbox" class="wk-slot" style="accent-color:var(--saffron); transform:scale(1.2); cursor:pointer;" data-day="${day}" data-slot="dinner" onchange="app.calculateTotal()" checked> <span style="padding-top:2px;">Dinner 8PM</span>
+           </label>
+         </div>
+       `).join('');
+    }
+
     this.showView('view-booking');
     this.calculateTotal();
   },
