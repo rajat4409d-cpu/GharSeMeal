@@ -212,7 +212,7 @@
         <button class="btn btn-primary w-100 mt-4" style="background:var(--saffron); border: 1px solid rgba(255,255,255,0.2);" onclick="app.showView('view-student-tracker')">📅 View Weekly Meal Tracker</button>
       </div>
 
-      <div class="premium-banner" onclick="alert('Upgrade to Premium Flow (Mocked)')">
+      <div class="premium-banner" onclick="app.showView('view-premium-upgrade')">
         <div class="premium-title">🌟 Upgrade to Premium — ₹49/month</div>
         <div class="premium-subtitle">Unlock verified cooks & priority booking</div>
       </div>
@@ -241,6 +241,49 @@
 
         <div id="cook-list" class="cook-list">
           <!-- Cards injected via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- PREMIUM SUB PAGE -->
+    <section id="view-premium-upgrade" class="view">
+      <header class="app-header">
+        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
+        <h2>Upgrade Plan</h2>
+      </header>
+      <div class="content-padding">
+        <div style="text-align:center; padding:15px 0 25px;">
+          <h2 style="color:var(--navy); margin-bottom:10px; font-size:1.8rem;">Eat better.<br>Save more.</h2>
+          <p style="color:var(--gray-500); font-size:0.95rem;">Join 500+ students enjoying premium benefits.</p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:15px; margin-bottom: 20px;">
+          <!-- Basic Plan -->
+          <div class="stats-card" style="border: 2px solid var(--gray-200); position:relative;">
+            <h3 style="color:var(--navy); margin-bottom:5px;">Basic Plan</h3>
+            <h2 style="margin-bottom:15px; font-size:1.8rem;">₹49 <span style="font-size:0.9rem; font-weight:normal; color:var(--gray-500);">/ month</span></h2>
+            <ul style="list-style-type:none; padding:0; margin-bottom:20px; line-height:1.8; font-size:0.95rem; color:var(--gray-800);">
+              <li>✅ Standard Cooks Access</li>
+              <li>✅ Pay-per-meal Booking</li>
+              <li style="opacity:0.5;">❌ No Weekly Discount</li>
+              <li style="opacity:0.5;">❌ No Runner Bonus</li>
+            </ul>
+            <button class="btn btn-secondary w-100" onclick="alert('Proceeding to mock gateway for Basic Plan!')">Select Basic</button>
+          </div>
+
+          <!-- Premium Plan -->
+          <div class="stats-card" style="border: 2px solid var(--saffron); position:relative; background:#FFFAF0;">
+            <div style="position:absolute; top:-12px; right:15px; background:var(--saffron); color:white; font-size:0.75rem; font-weight:bold; padding:4px 10px; border-radius:12px; letter-spacing:0.5px;">🌟 MOST POPULAR</div>
+            <h3 style="color:var(--navy); margin-bottom:5px;">Premium Plan</h3>
+            <h2 style="margin-bottom:15px; font-size:1.8rem;">₹99 <span style="font-size:0.9rem; font-weight:normal; color:var(--gray-500);">/ month</span></h2>
+            <ul style="list-style-type:none; padding:0; margin-bottom:20px; line-height:1.8; font-size:0.95rem; color:var(--gray-800);">
+              <li>✅ Full Access to <strong>Verified Pro Cooks</strong></li>
+              <li>✅ Unlock <strong>10% Weekly Discounts</strong></li>
+              <li>✅ Opt-in for <strong>Runner Bonus</strong> (Free meals)</li>
+              <li>✅ Priority ordering & No wait times</li>
+            </ul>
+            <button class="btn btn-primary w-100" onclick="alert('Proceeding to mock gateway for Premium Plan!')">Upgrade to Premium</button>
+          </div>
         </div>
       </div>
     </section>

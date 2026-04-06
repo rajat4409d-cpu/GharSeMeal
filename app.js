@@ -648,18 +648,31 @@ const app = {
     ordersItem.sort((a,b) => b.id - a.id);
     
     htmlEl.innerHTML = ordersItem.map(o => `
-      <div class="order-card">
-        <p><strong>Order ID:</strong> #${o.id.toString().slice(-4)}</p>
-        <p><strong>Time:</strong> ${o.time} (${o.date})</p>
-        <p><strong>Plan:</strong> ${o.plan.toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup (Bulk)</span>' : ''}</p>
-        <button class="btn btn-primary" style="margin-top:10px; padding: 6px 12px; font-size:0.85rem;" onclick="app.acceptOrder(${o.id})">Accept Order</button>
+        <div class="order-card" style="position:relative;">
+          <p><strong>Order ID:</strong> #${o.id.toString().slice(-4)}</p>
+          <p><strong>Time:</strong> ${o.time} (${o.date})</p>
+          <p><strong>Plan:</strong> ${o.plan.toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup</span>' : ''}</p>
+          
+          <div style="margin-top:12px;">
+            ${o.status === 'Pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="app.updateOrderStatus(${o.id}, 'Accepted')">Accept Order</button>` : ''}
+            ${o.status === 'Accepted' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#3B82F6;" onclick="app.updateOrderStatus(${o.id}, 'Ready')">Mark Ready</button>` : ''}
+            ${o.status === 'Ready' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#10B981;" onclick="app.updateOrderStatus(${o.id}, 'Complete')">Mark Complete</button>` : ''}
+            ${o.status === 'Complete' ? `<span style="background: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✅ Completed</span>` : ''}
+          </div>
+        </div>
       </div>
     `).join('');
   },
   
-  acceptOrder(orderId) {
-    alert("Order accepted! The student will be notified.");
-    // In a real app we would toggle the state in local storage.
+  updateOrderStatus(orderId, newStatus) {
+    const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY));
+    const idx = orders.findIndex(o => o.id === orderId);
+    if(idx > -1) {
+      orders[idx].status = newStatus;
+      localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
+    }
+    this.renderOrders();
+    this.initCookDashboard(); // refresh stats!
   },
 
   initTrackerView() {
