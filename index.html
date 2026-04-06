@@ -354,19 +354,45 @@
             <label>Payment Plan</label>
             <select id="b-plan" required onchange="app.calculateTotal()">
               <option value="meal">Pay Per Meal</option>
-              <option value="week">Pay Per Week (Save 10%)</option>
+              <option value="week">Pay Per Week (Flexible Scheduler)</option>
             </select>
           </div>
+          
+          <div id="b-weekly-grid" style="display:none; margin-bottom:20px; font-size:0.85rem;">
+            <p style="font-weight:bold; color:var(--navy); margin-bottom:10px;">Select your slots for the week:</p>
+            <table style="width:100%; text-align:center; border-collapse:collapse;">
+              <tr style="background:var(--off-white); border-bottom:2px solid var(--gray-200);">
+                <th style="padding:5px;">Day</th>
+                <th style="padding:5px;">Bfst<br><span style="font-weight:normal;font-size:0.7rem;">(8AM)</span></th>
+                <th style="padding:5px;">Lnch<br><span style="font-weight:normal;font-size:0.7rem;">(1PM)</span></th>
+                <th style="padding:5px;">Dnnr<br><span style="font-weight:normal;font-size:0.7rem;">(8PM)</span></th>
+              </tr>
+              <tbody id="b-weekly-tbody">
+                 <!-- JS injects rows -->
+              </tbody>
+            </table>
+            <p id="b-weekly-summary" style="margin-top:10px; font-weight:bold; color:var(--saffron);"></p>
+          </div>
+
           <div class="checkbox-group">
             <input type="checkbox" id="b-runner" onchange="app.calculateTotal()">
             <label for="b-runner">I'm picking up for 5+ people (Runner gets meal free!)</label>
           </div>
+
+          <div class="form-group" style="margin-top:15px;">
+             <label>Payment Method</label>
+             <select id="b-pay-method" onchange="app.checkWalletDeficit()">
+               <option value="wallet">Pay from GharSeMeal Wallet (Bal: ₹<span id="b-wallet-amt">500</span>)</option>
+               <option value="cash">Cash / UPI at Pickup</option>
+             </select>
+             <p id="b-wallet-alert" style="color:#EF4444; font-size:0.8rem; font-weight:bold; display:none; margin-top:5px;">Insufficient Wallet Balance!</p>
+          </div>
           
-          <div class="total-price">
+          <div class="total-price" id="b-total-text">
             Total: <span id="b-total-amount">₹0</span>
           </div>
 
-          <button type="submit" class="btn btn-primary w-100">Confirm Booking</button>
+          <button id="b-submit-btn" type="submit" class="btn btn-primary w-100">Confirm Booking</button>
         </form>
       </div>
     </section>
@@ -448,5 +474,30 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Main App JS -->
   <script src="app.js"></script>
+
+    <!-- WALLET ADD MONEY -->
+    <section id="view-wallet-add" class="view">
+      <header class="app-header">
+        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
+        <h2>Add Money</h2>
+      </header>
+      <div class="content-padding">
+        <h3 style="text-align:center; color:var(--navy); margin:20px 0;">Select Amount to Add</h3>
+        <button class="btn btn-secondary w-100" style="margin-bottom:15px; font-size:1.2rem; padding:15px; border:2px solid var(--saffron); color:var(--navy); font-weight:bold;" onclick="app.addWalletFunds(200)">+ ₹200</button>
+        <button class="btn btn-secondary w-100" style="margin-bottom:15px; font-size:1.2rem; padding:15px; border:2px solid var(--saffron); color:var(--navy); font-weight:bold;" onclick="app.addWalletFunds(500)">+ ₹500</button>
+        <button class="btn btn-secondary w-100" style="margin-bottom:15px; font-size:1.2rem; padding:15px; background:var(--saffron); color:white; border:none; font-weight:bold;" onclick="app.addWalletFunds(1000)">+ ₹1000 <span style="font-size:0.8rem; font-weight:normal;">(Best Value)</span></button>
+      </div>
+    </section>
+
+    <!-- WALLET HISTORY -->
+    <section id="view-wallet-history" class="view">
+      <header class="app-header">
+        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
+        <h2>Wallet History</h2>
+      </header>
+      <div class="content-padding" id="wallet-history-list">
+         <!-- Mapped by JS -->
+      </div>
+    </section>
 </body>
 </html>

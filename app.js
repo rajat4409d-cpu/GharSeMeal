@@ -179,6 +179,13 @@ const app = {
       document.getElementById('stat-meals').textContent = mealsEaten;
       document.getElementById('stat-saved').textContent = mealsEaten * 120;
       document.getElementById('stat-runner').textContent = runnerCount;
+
+      if(this.currentUser.walletBalance === undefined) {
+        this.currentUser.walletBalance = 500;
+        this.currentUser.walletHistory = [];
+        this.updateCurrentUser();
+      }
+      this.renderWalletStats();
     }
   },
 
@@ -366,18 +373,56 @@ const app = {
     let total = basePrice;
     
     if (plan === 'week') {
-      total = (basePrice * 7) * 0.9; // 10% discount for weekly
+      document.getElementById('b-weekly-grid').style.display = 'block';
+      const checkedCount = document.querySelectorAll('.wk-slot:checked').length;
+      total = (basePrice * checkedCount) * 0.9;
+      document.getElementById('b-weekly-summary').textContent = `${checkedCount} meals selected = ₹${total.toFixed(0)} total`;
+    } else {
+      document.getElementById('b-weekly-grid').style.display = 'none';
     }
     
     if (isRunner) {
-      total = 0; // Free meal if acting as a runner for 5+ people
+      total = 0;
     }
     
     document.getElementById('b-total-amount').textContent = isRunner ? '₹0 (Runner Bonus!)' : `₹${total.toFixed(0)}`;
+    this.currentBookingTotal = isRunner ? 0 : total;
+    this.checkWalletDeficit();
+  },
+
+  checkWalletDeficit() {
+    if(!this.currentUser) return;
+    const method = document.getElementById('b-pay-method').value;
+    const alertEl = document.getElementById('b-wallet-alert');
+    const submitBtn = document.getElementById('b-submit-btn');
+    const bal = this.currentUser.walletBalance || 0;
+    document.getElementById('b-wallet-amt').textContent = bal;
+    
+    if(method === 'wallet' && bal < this.currentBookingTotal) {
+       alertEl.style.display = 'block';
+       submitBtn.disabled = true;
+       submitBtn.style.opacity = '0.5';
+    } else {
+       alertEl.style.display = 'none';
+       submitBtn.disabled = false;
+       submitBtn.style.opacity = '1';
+    }
   },
 
   handleBookingSubmit(e) {
     e.preventDefault();
+    const method = document.getElementById('b-pay-method').value;
+    if(method === 'wallet' && this.currentBookingTotal > 0) {
+       this.currentUser.walletBalance -= this.currentBookingTotal;
+       this.currentUser.walletHistory = this.currentUser.walletHistory || [];
+       this.currentUser.walletHistory.unshift({
+          date: document.getElementById('b-date').value || new Date().toISOString().split('T')[0],
+          amount: -this.currentBookingTotal,
+          desc: `Booking: ${document.getElementById('b-plan').value.toUpperCase()} Plan`
+       });
+       this.updateCurrentUser();
+    }
+
     const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
     const cook = cooks.find(c => c.id === this.selectedCookId);
     
@@ -403,7 +448,7 @@ const app = {
     
     const orderIdCode = order.id.toString().slice(-4);
     document.getElementById('success-cook').textContent = cook.name;
-    document.getElementById('success-meal').textContent = document.getElementById('b-meal-type').value.toUpperCase();
+    document.getElementById('success-meal').textContent = document.getElementById('b-plan').value.toUpperCase();
     document.getElementById('success-time').textContent = time;
     document.getElementById('success-date').textContent = date;
     document.getElementById('success-code').textContent = '#' + orderIdCode;
@@ -679,13 +724,13 @@ const app = {
     if (!this.currentUser) return;
     if (!this.currentUser.tracker) {
       this.currentUser.tracker = [
-        { day: 'Mon', lunch: { cook: 'Aunty Sarita', status: 'Picked Up' }, dinner: { cook: "Meenakshi Ma'am", status: 'Picked Up' } },
-        { day: 'Tue', lunch: { cook: 'Aunty Sarita', status: 'Picked Up' }, dinner: { cook: 'Aunty Sarita', status: 'Missed' } },
-        { day: 'Wed', lunch: { cook: "Pooja's Tiffin Box", status: 'Scheduled' }, dinner: { cook: 'Aunty Sarita', status: 'Scheduled' } },
-        { day: 'Thu', lunch: { cook: 'Aunty Sarita', status: 'Scheduled' }, dinner: { cook: 'Aunty Sarita', status: 'Scheduled' } },
-        { day: 'Fri', lunch: { cook: 'Aunty Sarita', status: 'Scheduled' }, dinner: { cook: 'Aunty Sarita', status: 'Scheduled' } },
-        { day: 'Sat', lunch: null, dinner: { cook: 'Aunty Sarita', status: 'Scheduled' } },
-        { day: 'Sun', lunch: { cook: "Meenakshi Ma'am", status: 'Scheduled' }, dinner: null },
+        { day: 'Mon', breakfast: null, lunch: { cook: 'Aunty Sarita', status: 'Picked Up', price: 100 }, dinner: { cook: "Meenakshi Ma'am", status: 'Picked Up', price: 100 } },
+        { day: 'Tue', breakfast: null, lunch: { cook: 'Aunty Sarita', status: 'Picked Up', price: 100 }, dinner: { cook: 'Aunty Sarita', status: 'Missed', price: 100 } },
+        { day: 'Wed', breakfast: null, lunch: { cook: "Pooja's Tiffin Box", status: 'Scheduled', price: 110 }, dinner: { cook: 'Aunty Sarita', status: 'Scheduled', price: 100 } },
+        { day: 'Thu', breakfast: null, lunch: { cook: 'Aunty Sarita', status: 'Scheduled', price: 100 }, dinner: { cook: 'Aunty Sarita', status: 'Scheduled', price: 100 } },
+        { day: 'Fri', breakfast: null, lunch: { cook: 'Aunty Sarita', status: 'Scheduled', price: 100 }, dinner: { cook: 'Aunty Sarita', status: 'Scheduled', price: 100 } },
+        { day: 'Sat', breakfast: null, lunch: null, dinner: { cook: 'Aunty Sarita', status: 'Scheduled', price: 100 } },
+        { day: 'Sun', breakfast: null, lunch: { cook: "Meenakshi Ma'am", status: 'Scheduled', price: 100 }, dinner: null },
       ];
       this.updateCurrentUser();
     }
@@ -702,23 +747,24 @@ const app = {
          <h4 style="color:var(--navy); margin-bottom:10px; border-bottom:1px solid var(--gray-200); padding-bottom:5px;">${dayData.day}</h4>
        `;
        
-       ['lunch', 'dinner'].forEach(type => {
+       ['breakfast', 'lunch', 'dinner'].forEach(type => {
          const meal = dayData[type];
          if (meal) {
             scheduledCount++;
             let badgeColor = meal.status === 'Picked Up' ? 'background:#10B981;color:white;' : 
                              meal.status === 'Missed' ? 'background:#EF4444;color:white;' : 
+                             meal.status === 'Skipped (No Charge)' ? 'background:transparent; color:var(--gray-500); text-decoration:line-through; border:1px solid var(--gray-500);' :
                              'background:var(--saffron);color:white;';
             
             html += `
               <div class="meal-slot" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div>
+                <div style="${meal.status === 'Skipped (No Charge)' ? 'opacity:0.6;' : ''}">
                   <div style="font-weight:bold; font-size:0.9rem; text-transform:capitalize;">${type}</div>
                   <div style="font-size:0.8rem; color:var(--gray-500);">👨‍🍳 ${meal.cook}</div>
                 </div>
                 <div style="text-align:right;">
                   <span style="${badgeColor} padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">${meal.status}</span>
-                  ${meal.status === 'Scheduled' ? `<br><button onclick="app.markMealPickedUp(${dayIdx}, '${type}')" style="margin-top:5px; background:var(--navy); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">Mark Picked Up</button>` : ''}
+                  ${meal.status === 'Scheduled' ? `<br><button onclick="app.markMealPickedUp(${dayIdx}, '${type}')" style="margin-top:5px; background:var(--navy); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">Pick Up</button> <button onclick="app.skipMeal(${dayIdx}, '${type}')" style="margin-top:5px; background:var(--gray-200); color:var(--navy); border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">Skip</button>` : ''}
                 </div>
               </div>
             `;
@@ -735,12 +781,63 @@ const app = {
     document.getElementById('tracker-amount-saved').textContent = scheduledCount * 120;
   },
 
+  skipMeal(dayIdx, type) {
+    const hoursBound = { breakfast: 8, lunch: 13, dinner: 20 };
+    const now = new Date();
+    const mealHour = hoursBound[type.toLowerCase()];
+    const target = new Date();
+    target.setHours(mealHour, 0, 0, 0);
+    
+    const diffHours = (target - now) / 1000 / 60 / 60;
+    const meal = this.currentUser.tracker[dayIdx][type];
+    
+    if (diffHours >= 2 || diffHours < -10) { 
+       alert("Early Skip! Full Refund added to Wallet.");
+       meal.status = 'Skipped (No Charge)';
+       this.currentUser.walletBalance += (meal.price || 100);
+       this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: (meal.price || 100), desc: `Refund: Skipped ${type}` });
+    } else {
+       alert(`Late skip! Less than 2 hours before ${type}. No refund applied.`);
+       meal.status = 'Missed';
+       this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: 0, desc: `Late Skip Penalty: ${type}` });
+    }
+    this.updateCurrentUser();
+    this.renderTracker();
+    this.initStudentDashboard(); // sync dashboard stats
+  },
+
+  renderWalletStats() {
+     const hList = document.getElementById('wallet-history-list');
+     if (hList) {
+        let hHtml = (this.currentUser.walletHistory || []).map(tx => `
+           <div style="display:flex; justify-content:space-between; padding:15px; background:var(--white); border-radius:8px; box-shadow:var(--shadow); margin-bottom:10px;">
+             <div><p style="font-size:0.85rem; color:var(--gray-500); margin:0 0 5px;">${tx.date}</p><p style="font-weight:bold; color:var(--navy); margin:0;">${tx.desc}</p></div>
+             <div style="font-size:1.2rem; font-weight:bold; color:${tx.amount > 0 ? '#10B981' : '#EF4444'}">${tx.amount > 0 ? '+' : ''}₹${Math.abs(tx.amount)}</div>
+           </div>
+        `).join('');
+        hList.innerHTML = hHtml || '<p style="text-align:center;color:var(--gray-500);">No transactions yet.</p>';
+     }
+     const balStr = document.getElementById('wallet-balance');
+     if (balStr) {
+        balStr.textContent = this.currentUser.walletBalance;
+        document.getElementById('wallet-warning').style.display = this.currentUser.walletBalance < 100 ? 'block' : 'none';
+     }
+  },
+
+  addWalletFunds(amt) {
+     this.currentUser.walletBalance += amt;
+     this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: amt, desc: 'Added via Mock Gateway' });
+     this.updateCurrentUser();
+     alert(`₹${amt} added to Wallet successfully!`);
+     this.showView('view-student-dashboard');
+  },
+
   markMealPickedUp(dayIdx, type) {
     this.currentUser.tracker[dayIdx][type].status = 'Picked Up';
     this.currentUser.mealsEaten = (this.currentUser.mealsEaten || 12) + 1;
     this.updateCurrentUser();
     this.renderTracker();
-    this.initStudentDashboard(); // refresh dashboard stats
+    this.initStudentDashboard(); 
   },
 
   updateCurrentUser() {
