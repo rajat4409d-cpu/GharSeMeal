@@ -250,15 +250,19 @@ const app = {
       let badgeHtml = cook.recommended ? `<div class="tag-recommended">✦ AI Recommended</div>` : '';
       
       card.innerHTML = `
+        <div class="cook-card-banner"></div>
         ${badgeHtml}
-        <div class="cook-header">
-          <div class="cook-name">${cook.name}</div>
-          <div class="cook-rating">★ ${cook.rating}</div>
-        </div>
-        <div class="cook-cuisine">${cook.cuisine} | Hygiene Score: ${cook.hygiene}%</div>
-        <div class="cook-footer">
-          <div class="cook-price">₹${cook.price} <span style="font-size:0.8rem; font-weight:normal;">/ meal</span></div>
-          <button class="btn btn-secondary" onclick="app.viewCookProfile(${cook.id})" style="padding: 8px 16px;">View Menu</button>
+        <div class="cook-card-content">
+          <div class="cook-header">
+            <div class="cook-name">${cook.name}</div>
+            <div class="cook-rating">★ ${cook.rating}</div>
+          </div>
+          <div class="cook-cuisine">${cook.cuisine}</div>
+          <div class="hygiene-badge">Hygiene Score: ${cook.hygiene}%</div>
+          <div class="cook-footer">
+            <div class="cook-price">₹${cook.price} <span style="font-size:0.8rem; font-weight:normal; color:var(--gray-500);">/ meal</span></div>
+            <button class="btn btn-primary" onclick="app.viewCookProfile(${cook.id})" style="padding: 10px 20px; font-size:0.9rem;">View Menu</button>
+          </div>
         </div>
       `;
       listEl.appendChild(card);

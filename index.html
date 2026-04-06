@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GharSeMeal - Ghar Jaisa Khana</title>
   
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   
@@ -202,12 +206,18 @@
       </header>
       
       <!-- Greeting and Stats Section -->
-      <div style="background: var(--navy); color: white; padding: 15px 20px;">
-        <h3 id="student-greeting" style="margin-bottom: 8px;">Good morning!</h3>
-        <div class="stats-bar" id="student-stats-bar" style="display:flex; justify-content:space-between; font-size:0.85rem; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius:8px;">
-          <span>🍱 <strong id="stat-meals">0</strong> meals</span>
-          <span>💰 ₹<strong id="stat-saved">0</strong> saved</span>
-          <span>🏃 <strong id="stat-runner">0</strong> runner</span>
+      <div style="background: var(--white); border-bottom:1px solid var(--gray-200); padding: 20px;">
+        <h3 id="student-greeting" style="margin-bottom: 12px; color:var(--navy);">Good morning!</h3>
+        <div class="stats-bar" id="student-stats-bar" style="display:flex; gap: 8px; font-size:0.8rem; flex-wrap:wrap;">
+          <div style="background:var(--off-white); padding:6px 12px; border-radius:30px; border:1px solid var(--gray-200); flex:1; text-align:center;">
+             <span>🍱 <strong id="stat-meals" style="color:var(--navy);">0</strong> <span style="color:var(--gray-500);">meals</span></span>
+          </div>
+          <div style="background:var(--off-white); padding:6px 12px; border-radius:30px; border:1px solid var(--gray-200); flex:1; text-align:center;">
+             <span>💰 ₹<strong id="stat-saved" style="color:var(--saffron);">0</strong> <span style="color:var(--gray-500);">saved</span></span>
+          </div>
+          <div style="background:var(--off-white); padding:6px 12px; border-radius:30px; border:1px solid var(--gray-200); flex:1; text-align:center;">
+             <span>🏃 <strong id="stat-runner" style="color:var(--navy);">0</strong> <span style="color:var(--gray-500);">runner</span></span>
+          </div>
         </div>
         <button class="btn btn-primary w-100 mt-4" style="background:var(--saffron); border: 1px solid rgba(255,255,255,0.2);" onclick="app.showView('view-student-tracker')">📅 View Weekly Meal Tracker</button>
       </div>
