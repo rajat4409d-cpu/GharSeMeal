@@ -16,11 +16,11 @@
     <!-- LANDING VIEW -->
     <section id="view-landing" class="view active">
       <div class="landing-content">
-        <h1 class="logo">GharSeMeal</h1>
+        <h1 class="logo">🍲 GharSeMeal</h1>
         <p class="tagline">Ghar Jaisa Khana, Ghar Ke Paas.</p>
         <div class="landing-buttons">
-          <button class="btn btn-primary" onclick="app.loginAs('student')">I'm a Student</button>
-          <button class="btn btn-secondary" onclick="app.loginAs('cook')">I'm a Cook</button>
+          <button class="btn btn-primary" style="font-size: 1.2rem; padding: 18px;" onclick="app.loginAs('student')">👨‍🎓 I'm a Student</button>
+          <button class="btn btn-secondary" style="font-size: 1.2rem; padding: 18px;" onclick="app.loginAs('cook')">👩‍🍳 I'm a Cook</button>
         </div>
       </div>
     </section>
@@ -118,7 +118,15 @@
         <div class="stats-card">
           <h3>Your Stats</h3>
           <p>Rating: 4.8 / 5</p>
-          <p>Active Menu: Rajma Chawal, Parathas</p>
+          <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">
+          <h4>Manage Active Menu</h4>
+          <ul id="cook-menu-list" style="margin: 10px 0 15px 20px; line-height: 1.6; list-style-type: none; padding: 0;">
+             <!-- Injected via JS -->
+          </ul>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="new-menu-item" placeholder="Add new dish..." style="flex: 1; padding: 8px; border-radius: 4px; border: none; outline: none; color: black;">
+            <button class="btn btn-primary" style="padding: 8px 15px;" onclick="app.addMenuItem()">Add</button>
+          </div>
         </div>
         
         <h3 class="mt-4">Incoming Orders</h3>

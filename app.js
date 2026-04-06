@@ -69,7 +69,7 @@ const app = {
       this.initMap();
       this.renderCooks();
     } else if (viewId === 'view-cook-dashboard') {
-      this.renderOrders();
+      this.initCookDashboard();
     }
   },
 
@@ -232,6 +232,45 @@ const app = {
     
     alert(`Success! Meal booked at ${cook.name} for ${time}!\n\n(Saved to LocalStorage)`);
     this.showView('view-student-dashboard');
+  },
+
+  initCookDashboard() {
+    this.renderOrders();
+    this.renderManageMenu();
+  },
+
+  renderManageMenu() {
+    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
+    const myCook = cooks[0]; // Assuming Cook ID 1 is logged-in cook
+    const menuList = document.getElementById('cook-menu-list');
+    
+    menuList.innerHTML = myCook.menu.map((m, idx) => `
+      <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <span>${m}</span>
+        <button onclick="app.removeMenuItem(${idx})" style="background:transparent; border:none; color:var(--saffron); cursor:pointer; font-weight:bold; font-size:1.1rem;" title="Remove">✕</button>
+      </li>
+    `).join('');
+  },
+
+  addMenuItem() {
+    const input = document.getElementById('new-menu-item');
+    const val = input.value.trim();
+    if (!val) return;
+    
+    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
+    cooks[0].menu.push(val);
+    localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    
+    input.value = '';
+    this.renderManageMenu();
+  },
+
+  removeMenuItem(idx) {
+    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
+    cooks[0].menu.splice(idx, 1);
+    localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    
+    this.renderManageMenu();
   },
 
   renderOrders() {
