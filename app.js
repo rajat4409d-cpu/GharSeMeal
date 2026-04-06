@@ -72,10 +72,11 @@ const app = {
     this.activeView = viewId;
 
     if (viewId === 'view-student-dashboard') {
-      this.initMap();
-      this.renderCooks();
+      this.initStudentDashboard();
     } else if (viewId === 'view-cook-dashboard') {
       this.initCookDashboard();
+    } else if (viewId === 'view-student-tracker') {
+      this.initTrackerView();
     }
   },
 
@@ -166,6 +167,27 @@ const app = {
   logout() {
     this.currentUser = null;
     this.showView('view-landing');
+  },
+
+  initStudentDashboard() {
+    this.initMap();
+    this.renderCooks();
+    
+    // Greeting
+    const hour = new Date().getHours();
+    let greeting = "Good evening";
+    if (hour < 12) greeting = "Good morning";
+    else if (hour < 17) greeting = "Good afternoon";
+    
+    if (this.currentUser) {
+      document.getElementById('student-greeting').textContent = `${greeting}, ${this.currentUser.name.split(' ')[0]}!`;
+      
+      const mealsEaten = this.currentUser.mealsEaten || 12;
+      const runnerCount = this.currentUser.runnerCount || 2;
+      document.getElementById('stat-meals').textContent = mealsEaten;
+      document.getElementById('stat-saved').textContent = mealsEaten * 120;
+      document.getElementById('stat-runner').textContent = runnerCount;
+    }
   },
 
   initMap() {
@@ -412,6 +434,83 @@ const app = {
   acceptOrder(orderId) {
     alert("Order accepted! The student will be notified.");
     // In a real app we would toggle the state in local storage.
+  },
+
+  initTrackerView() {
+    if (!this.currentUser) return;
+    if (!this.currentUser.tracker) {
+      this.currentUser.tracker = [
+        { day: 'Mon', lunch: { cook: 'Aunty Sarita', status: 'Picked Up' }, dinner: { cook: "Meenakshi Ma'am", status: 'Picked Up' } },
+        { day: 'Tue', lunch: { cook: 'Aunty Sarita', status: 'Picked Up' }, dinner: { cook: 'Aunty Sarita', status: 'Missed' } },
+        { day: 'Wed', lunch: { cook: "Pooja's Tiffin Box", status: 'Scheduled' }, dinner: { cook: 'Aunty Sarita', status: 'Scheduled' } },
+        { day: 'Thu', lunch: { cook: 'Aunty Sarita', status: 'Scheduled' }, dinner: { cook: 'Aunty Sarita', status: 'Scheduled' } },
+        { day: 'Fri', lunch: { cook: 'Aunty Sarita', status: 'Scheduled' }, dinner: { cook: 'Aunty Sarita', status: 'Scheduled' } },
+        { day: 'Sat', lunch: null, dinner: { cook: 'Aunty Sarita', status: 'Scheduled' } },
+        { day: 'Sun', lunch: { cook: "Meenakshi Ma'am", status: 'Scheduled' }, dinner: null },
+      ];
+      this.updateCurrentUser();
+    }
+    this.renderTracker();
+  },
+
+  renderTracker() {
+    const listEl = document.getElementById('tracker-calendar-list');
+    let html = '';
+    let scheduledCount = 0;
+    
+    this.currentUser.tracker.forEach((dayData, dayIdx) => {
+       html += `<div class="tracker-day" style="background:var(--white); border-radius:8px; box-shadow:var(--shadow); padding:15px; margin-bottom:12px;">
+         <h4 style="color:var(--navy); margin-bottom:10px; border-bottom:1px solid var(--gray-200); padding-bottom:5px;">${dayData.day}</h4>
+       `;
+       
+       ['lunch', 'dinner'].forEach(type => {
+         const meal = dayData[type];
+         if (meal) {
+            scheduledCount++;
+            let badgeColor = meal.status === 'Picked Up' ? 'background:#10B981;color:white;' : 
+                             meal.status === 'Missed' ? 'background:#EF4444;color:white;' : 
+                             'background:var(--saffron);color:white;';
+            
+            html += `
+              <div class="meal-slot" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div>
+                  <div style="font-weight:bold; font-size:0.9rem; text-transform:capitalize;">${type}</div>
+                  <div style="font-size:0.8rem; color:var(--gray-500);">👨‍🍳 ${meal.cook}</div>
+                </div>
+                <div style="text-align:right;">
+                  <span style="${badgeColor} padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">${meal.status}</span>
+                  ${meal.status === 'Scheduled' ? `<br><button onclick="app.markMealPickedUp(${dayIdx}, '${type}')" style="margin-top:5px; background:var(--navy); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">Mark Picked Up</button>` : ''}
+                </div>
+              </div>
+            `;
+         } else {
+            html += `<div style="font-size:0.85rem; color:var(--gray-500); margin-bottom:10px;">${type.charAt(0).toUpperCase() + type.slice(1)}: No meal scheduled</div>`;
+         }
+       });
+       html += `</div>`;
+    });
+    
+    listEl.innerHTML = html;
+    
+    document.getElementById('tracker-total-meals').textContent = scheduledCount;
+    document.getElementById('tracker-amount-saved').textContent = scheduledCount * 120;
+  },
+
+  markMealPickedUp(dayIdx, type) {
+    this.currentUser.tracker[dayIdx][type].status = 'Picked Up';
+    this.currentUser.mealsEaten = (this.currentUser.mealsEaten || 12) + 1;
+    this.updateCurrentUser();
+    this.renderTracker();
+    this.initStudentDashboard(); // refresh dashboard stats
+  },
+
+  updateCurrentUser() {
+    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
+    const idx = users.findIndex(u => u.id === this.currentUser.id);
+    if(idx > -1) {
+      users[idx] = this.currentUser;
+      localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
+    }
   }
 };
 

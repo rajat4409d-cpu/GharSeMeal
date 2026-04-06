@@ -122,6 +122,17 @@
         </div>
       </header>
       
+      <!-- Greeting and Stats Section -->
+      <div style="background: var(--navy); color: white; padding: 15px 20px;">
+        <h3 id="student-greeting" style="margin-bottom: 8px;">Good morning!</h3>
+        <div class="stats-bar" id="student-stats-bar" style="display:flex; justify-content:space-between; font-size:0.85rem; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius:8px;">
+          <span>🍱 <strong id="stat-meals">0</strong> meals</span>
+          <span>💰 ₹<strong id="stat-saved">0</strong> saved</span>
+          <span>🏃 <strong id="stat-runner">0</strong> runner</span>
+        </div>
+        <button class="btn btn-primary w-100 mt-4" style="background:var(--saffron); border: 1px solid rgba(255,255,255,0.2);" onclick="app.showView('view-student-tracker')">📅 View Weekly Meal Tracker</button>
+      </div>
+
       <div class="premium-banner" onclick="alert('Upgrade to Premium Flow (Mocked)')">
         <div class="premium-title">🌟 Upgrade to Premium — ₹49/month</div>
         <div class="premium-subtitle">Unlock verified cooks & priority booking</div>
@@ -151,6 +162,26 @@
 
         <div id="cook-list" class="cook-list">
           <!-- Cards injected via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- MEAL TRACKER -->
+    <section id="view-student-tracker" class="view">
+      <header class="app-header">
+        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
+        <h2>Weekly Meal Tracker</h2>
+      </header>
+      
+      <div class="content-padding">
+        <div class="tracker-summary stats-card" style="margin-bottom:0;">
+          <h3 style="margin-bottom: 5px;">This Week's Impact</h3>
+          <p>Total Scheduled Meals: <strong id="tracker-total-meals">0</strong></p>
+          <p style="color: #Fcd34d;">Saved vs Zomato: <strong>₹<span id="tracker-amount-saved">0</span></strong></p>
+        </div>
+        
+        <div id="tracker-calendar-list" style="margin-top: 15px;">
+          <!-- Days mapped via JS -->
         </div>
       </div>
     </section>
