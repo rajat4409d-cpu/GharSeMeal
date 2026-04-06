@@ -275,6 +275,16 @@ const app = {
     
     const menuLi = cook.menu.map(item => `<li>${item}</li>`).join('');
     
+    const reviewsHtml = (cook.reviews || [
+      { name: "Rahul S.", rating: 5, comment: "Just like home! Saving my life during exams." },
+      { name: "Priya M.", rating: 4, comment: "Great portions, very hygienic and tasty." }
+    ]).map(r => `
+      <div style="border-bottom: 1px solid var(--gray-200); padding-bottom:10px; margin-bottom:10px; font-size:0.9rem;">
+        <strong>${r.name}</strong> <span style="color:var(--saffron);">★ ${r.rating}</span>
+        <p style="color:var(--gray-500); margin-top:4px;">"${r.comment}"</p>
+      </div>
+    `).join('');
+
     profileEl.innerHTML = `
       <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
         <h3 style="color: var(--navy); margin-bottom: 5px;">${cook.name}</h3>
@@ -286,10 +296,54 @@ const app = {
         </ul>
         <h3 style="margin-bottom: 20px;">Price: ₹${cook.price}/meal</h3>
         <button class="btn btn-primary w-100" onclick="app.showBookingForm()">Book a Meal</button>
+        
+        <div style="margin-top: 30px;">
+          <h4 style="margin-bottom: 15px; color: var(--navy);">Student Reviews</h4>
+          ${reviewsHtml}
+          
+          <div id="leave-review-section" style="margin-top: 15px;">
+             <button class="btn btn-secondary w-100" style="background:var(--off-white); color:var(--navy); border:1px solid var(--gray-200);" onclick="document.getElementById('review-form').style.display='block'; this.style.display='none';">💬 Leave a Review</button>
+             
+             <div id="review-form" style="display:none; background:var(--off-white); padding:15px; border-radius:8px; border:1px solid var(--gray-200);">
+               <label style="font-size:0.85rem; font-weight:bold;">Rating (1-5)</label>
+               <input type="number" id="new-review-rating" min="1" max="5" value="5" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid var(--gray-200); border-radius:4px;">
+               
+               <label style="font-size:0.85rem; font-weight:bold;">Comment</label>
+               <textarea id="new-review-comment" rows="2" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid var(--gray-200); border-radius:4px;" placeholder="How was the food?"></textarea>
+               
+               <button class="btn btn-primary w-100" style="padding:10px;" onclick="app.submitReview(${cook.id})">Post Review</button>
+             </div>
+          </div>
+        </div>
       </div>
     `;
     
     this.showView('view-cook-profile');
+  },
+
+  submitReview(cookId) {
+    const rating = document.getElementById('new-review-rating').value;
+    const comment = document.getElementById('new-review-comment').value.trim();
+    if (!comment) return;
+    
+    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
+    const cookIndex = cooks.findIndex(c => c.id === cookId);
+    if(cookIndex > -1){
+      if(!cooks[cookIndex].reviews) {
+         cooks[cookIndex].reviews = [
+            { name: "Rahul S.", rating: 5, comment: "Just like home! Saving my life during exams." },
+            { name: "Priya M.", rating: 4, comment: "Great portions, very hygienic and tasty." }
+         ];
+      }
+      cooks[cookIndex].reviews.unshift({
+         name: this.currentUser ? this.currentUser.name : "Anonymous",
+         rating: parseInt(rating),
+         comment: comment
+      });
+      localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    }
+    
+    this.viewCookProfile(cookId); // re-render
   },
 
   showBookingForm() {
