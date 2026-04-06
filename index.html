@@ -4,502 +4,673 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GharSeMeal - Ghar Jaisa Khana</title>
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Leaflet CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app" class="app-container">
-    
-    <!-- LANDING VIEW -->
-    <section id="view-landing" class="view active">
-      <div class="landing-content">
-        <h1 class="logo">🍲 GharSeMeal</h1>
-        <p class="tagline">Ghar Jaisa Khana, Ghar Ke Paas.</p>
-        <div class="landing-stats" style="display:flex; justify-content:center; gap:20px; margin-bottom: 35px; font-size:0.9rem; flex-wrap:wrap; font-weight:600;">
-          <span>🍱 200+ Students Fed</span>
-          <span>👩‍🍳 50+ Home Chefs</span>
-          <span>⭐ 4.8 Average Rating</span>
-        </div>
 
-        <div class="landing-buttons">
-          <button class="btn btn-primary" style="font-size: 1.2rem; padding: 18px;" onclick="app.loginAs('student')">👨‍🎓 I'm a Student</button>
-          <button class="btn btn-secondary" style="font-size: 1.2rem; padding: 18px;" onclick="app.loginAs('cook')">👩‍🍳 I'm a Cook</button>
-        </div>
+  <!-- GLOBAL NAVBAR -->
+  <header class="global-header">
+    <a href="#" class="brand-logo" onclick="app.showView('view-landing')">GharSeMeal</a>
+    <nav class="header-nav" id="global-nav-links">
+       <a href="#" onclick="app.showView('view-landing')">Home</a>
+       <a href="#">About Us</a>
+       <a href="#">How it Works</a>
+       <a href="#">Contact</a>
+    </nav>
+    <div class="header-actions" id="global-nav-actions">
+       <button class="btn btn-outline" onclick="app.toggleCookFormMode('login'); app.showView('view-cook-auth')">I'm a Cook</button>
+       <button class="btn btn-primary" onclick="app.toggleAuthMode('login'); app.showView('view-student-auth')">Student Login</button>
+    </div>
+  </header>
 
-        <div class="how-it-works" style="margin-top: 50px; text-align:left; background: rgba(255,255,255,0.1); padding: 25px; border-radius: 12px; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-          <h3 style="text-align:center; margin-bottom:20px; font-size:1.1rem;">How It Works</h3>
-          <div style="display:flex; gap: 15px; justify-content:space-between; font-size:0.85rem;">
-            <div style="flex:1;">
-              <strong style="color:#Fcd34d;">👨‍🎓 For Students</strong><br><br>
-              1. 🔍 Find a Cook<br><br>
-              2. 📅 Book Your Meals<br><br>
-              3. 🎒 Pick Up & Enjoy
-            </div>
-            <div style="flex:1;">
-              <strong style="color:#Fcd34d;">👩‍🍳 For Cooks</strong><br><br>
-              1. 📝 Create Profile<br><br>
-              2. 🍛 Set Menu & Price<br><br>
-              3. 📈 Steady Students
-            </div>
-          </div>
-        </div>
-
-        <!-- ORIGIN STORY -->
-        <div class="origin-story" style="margin-top: 40px; text-align:center; background: rgba(0,0,0,0.15); padding: 25px 20px; border-radius: 12px; width: 100%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
-          <h3 style="margin-bottom:12px; font-size:1.1rem; color:#Fcd34d;">Our Story</h3>
-          <p style="font-size:0.85rem; line-height:1.6; margin-bottom: 25px; font-weight: 500;">Born from a real problem — bad PG food and an amazing aunty next door.<br><br>GharSeMeal connects students to home chefs in their neighbourhood.</p>
-          <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
-            <div style="background: var(--white); color: var(--navy); padding: 12px 15px; border-radius: 8px; width: 100%; font-weight:bold; font-size:0.9rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid var(--saffron);">
-              🏠 Homemade Quality
-            </div>
-            <div style="background: var(--white); color: var(--navy); padding: 12px 15px; border-radius: 8px; width: 100%; font-weight:bold; font-size:0.9rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid var(--saffron);">
-              💰 Save vs Zomato
-            </div>
-            <div style="background: var(--white); color: var(--navy); padding: 12px 15px; border-radius: 8px; width: 100%; font-weight:bold; font-size:0.9rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid var(--saffron);">
-              🤝 Community First
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- STUDENT AUTH VIEW -->
-    <section id="view-student-auth" class="view">
-      <header class="app-header">
-        <button class="btn-icon" onclick="app.showView('view-landing')">← Back</button>
-        <h2>Student Access</h2>
-      </header>
-      <div class="content-padding auth-wrapper">
-        <div class="auth-card">
-          <h3 id="student-auth-title" style="margin-bottom: 20px; color: var(--navy); text-align: center;">Login to your account</h3>
-          <form id="student-auth-form" onsubmit="app.handleAuth(event, 'student')">
-            <div class="form-group">
-              <label>Name</label>
-              <input type="text" id="auth-s-name" required placeholder="Enter your full name">
-            </div>
-            
-            <div id="student-signup-fields" style="display: none;">
-              <div class="form-group">
-                <label>College/University</label>
-                <input type="text" id="auth-s-college" placeholder="e.g., Delhi University">
-              </div>
-              <div class="form-group">
-                <label>PG Address / Hostel</label>
-                <input type="text" id="auth-s-address" placeholder="Room 204, Boys Hostel...">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Password</label>
-              <input type="password" id="auth-s-pass" required placeholder="Enter password">
-            </div>
-            
-            <button type="submit" class="btn btn-primary w-100" id="student-auth-btn">Login</button>
-          </form>
-          
-          <div class="auth-toggle">
-            <span id="student-toggle-text">Don't have an account?</span> 
-            <a href="#" onclick="app.toggleAuthMode('student')"><span id="student-toggle-link">Sign up</span></a>
-          </div>
+  <!-- LANDING PAGE -->
+  <section id="view-landing" class="view active">
+    <!-- Hero Split -->
+    <div class="landing-split">
+      <div class="landing-left">
+        <div class="badge" style="margin-bottom:20px; display:inline-block;">Connecting Neighborhoods Through Food</div>
+        <h1 class="hero-h1">Ghar Jaisa Khana,<br><i style="color:var(--primary);">Ghar Ke Paas</i></h1>
+        <p class="hero-subtitle">Born from a real problem — bad PG food and an amazing aunty next door. GharSeMeal connects students to home chefs natively in their neighbourhood.</p>
+        <div style="display:flex; gap:15px;">
+           <button class="btn btn-primary" onclick="app.toggleAuthMode('signup'); app.showView('view-student-auth')">I'm a Student</button>
+           <button class="btn btn-outline" onclick="app.toggleCookFormMode('signup'); app.showView('view-cook-auth')">I'm a Cook</button>
         </div>
       </div>
-    </section>
+      <div class="landing-right">
+        <div class="hero-img-card"></div>
+        <div class="hero-cook-overlay">
+           <div class="avatar-circle" style="width:50px; height:50px; background:var(--primary); color:white;">AS</div>
+           <div>
+              <div style="font-weight:800; font-size:1.1rem; color:var(--secondary);">Aunty Sarita's Kitchen</div>
+              <div style="color:var(--primary); font-weight:700; font-size:0.9rem;">★ 4.9 • Top Rated Chef</div>
+           </div>
+        </div>
+      </div>
+    </div>
+    <!-- Stats Row -->
+    <div style="background:var(--white); border-top:1px solid var(--gray-200); border-bottom:1px solid var(--gray-200); padding:30px 40px; display:flex; justify-content:space-around; text-align:center;">
+       <div><div style="font-size:2rem; font-weight:800; color:var(--primary);">2000+</div><div style="font-weight:600;">Students Fed</div></div>
+       <div><div style="font-size:2rem; font-weight:800; color:var(--primary);">50+</div><div style="font-weight:600;">Home Chefs</div></div>
+       <div><div style="font-size:2rem; font-weight:800; color:var(--primary);">4.8</div><div style="font-weight:600;">Average Rating</div></div>
+    </div>
+    <!-- How it works -->
+    <div style="padding:60px 40px; max-width:1200px; margin:0 auto; width:100%;">
+       <h2 style="text-align:center; font-size:2.5rem; margin-bottom:40px;">How It Works</h2>
+       <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px;">
+          <div class="card">
+             <h3 style="color:var(--primary); margin-bottom:20px; font-size:1.4rem;">For Students</h3>
+             <p style="margin-bottom:10px;"><strong>1. Find a Cook Near You:</strong> Browse local kitchens.</p>
+             <p style="margin-bottom:10px;"><strong>2. Book Your Meals:</strong> Set up a flexible schedule.</p>
+             <p><strong>3. Pick Up & Enjoy:</strong> Grab your fresh tiffin.</p>
+          </div>
+          <div class="card">
+             <h3 style="color:var(--secondary); margin-bottom:20px; font-size:1.4rem;">For Cooks</h3>
+             <p style="margin-bottom:10px;"><strong>1. Create Your Profile:</strong> List your specialties.</p>
+             <p style="margin-bottom:10px;"><strong>2. Set Menu & Price:</strong> Total control over offerings.</p>
+             <p><strong>3. Get Steady Students:</strong> Build neighborhood regulars.</p>
+          </div>
+       </div>
+    </div>
+  </section>
 
-    <!-- COOK AUTH VIEW -->
-    <section id="view-cook-auth" class="view">
-      <header class="app-header">
-        <button class="btn-icon" onclick="app.showView('view-landing')">← Back</button>
-        <h2>For Home Chefs</h2>
-      </header>
-      <div class="content-padding auth-wrapper" style="align-items:flex-start;">
-        <div class="auth-card" id="cook-auth-container">
-          
-          <!-- Login View -->
-          <div id="cook-login-view">
-            <h3 style="margin-bottom: 20px; color: var(--navy); text-align: center;">Login to your account</h3>
-            <form onsubmit="app.handleCookLogin(event)">
-              <div class="form-group">
-                <label>Phone Number</label>
-                <input type="tel" id="cl-phone" required placeholder="Your registered number">
-              </div>
-              <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="cl-pwd" required placeholder="Enter password">
-              </div>
-              <button type="submit" class="btn btn-primary w-100">Login</button>
-            </form>
-            <div class="auth-toggle">
-              Want to become a GharSeMeal chef? <a href="#" onclick="app.toggleCookFormMode('signup')">Sign Up</a>
+  <!-- STUDENT AUTH -->
+  <section id="view-student-auth" class="view">
+    <div class="auth-split">
+      <div class="auth-left">
+         <h1 style="font-size:3rem; margin-bottom:20px;">GharSeMeal</h1>
+         <p style="font-size:1.5rem; line-height:1.4; margin-bottom:40px;">"Taste the warmth of a home kitchen, away from home."</p>
+         <div style="display:flex; align-items:center; gap:15px; margin-top:auto;">
+            <div style="display:flex;">
+               <div class="avatar-circle" style="border-color:white; margin-right:-10px;">1</div>
+               <div class="avatar-circle" style="border-color:white; margin-right:-10px; background:#4CAF50;">2</div>
+               <div class="avatar-circle" style="border-color:white; background:#2196F3;">3</div>
             </div>
+            <span style="font-weight:600;">Joined by 2000+ students</span>
+         </div>
+      </div>
+      <div class="auth-right">
+         <div class="auth-box">
+           <h2 id="auth-title" style="font-size:2rem; margin-bottom:30px; text-align:center;">Welcome Back</h2>
+           <form id="auth-form" onsubmit="app.handleAuthSubmit(event)">
+             <div class="form-group" id="auth-name-group" style="display:none;">
+               <label>Full Name</label>
+               <input type="text" id="auth-name" placeholder="Rahul Sharma">
+             </div>
+             <div class="form-group">
+               <label>Email Address</label>
+               <input type="email" id="auth-email" placeholder="student@college.edu" required>
+             </div>
+             <div class="form-group">
+               <label>Password</label>
+               <input type="password" id="auth-password" placeholder="••••••••" required>
+             </div>
+             <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;" id="auth-submit-btn">Login to Dashboard</button>
+             
+             <div style="text-align:center; margin:20px 0; color:var(--gray-500); font-size:0.9rem;">OR</div>
+             <div style="display:flex; gap:10px;">
+                <button type="button" class="btn btn-outline" style="flex:1;">Google</button>
+                <button type="button" class="btn btn-outline" style="flex:1;">Facebook</button>
+             </div>
+
+             <div class="auth-toggle" style="margin-top:25px; text-align:center;">
+               <span id="auth-toggle-text">New to GharSeMeal?</span>
+               <a href="#" id="auth-toggle-link" onclick="app.toggleAuthMode()">Create an account</a>
+             </div>
+           </form>
+         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STUDENT DASHBOARD -->
+  <section id="view-student-dashboard" class="view">
+    <div class="dashboard-layout">
+      <!-- Left Sidebar -->
+      <div class="left-sidebar">
+         <div class="badge" style="margin-bottom:15px; text-align:center;">Student Portal</div>
+         <a href="#" class="sidebar-link active"><span>📊</span> Dashboard</a>
+         <a href="#" class="sidebar-link"><span>📋</span> My Bookings</a>
+         <a href="#" class="sidebar-link" onclick="app.showView('view-student-tracker')"><span>📅</span> Meal Tracker</a>
+         <a href="#" class="sidebar-link"><span>💳</span> Wallet</a>
+         <a href="#" class="sidebar-link"><span>⚙️</span> Settings</a>
+      </div>
+
+      <!-- Main Center -->
+      <div class="main-content">
+         <h1 id="student-greeting" style="font-size:2.5rem; margin-bottom:5px;">Good morning!</h1>
+         <p style="color:var(--gray-500); margin-bottom:25px; font-weight:500;">Ready to order some delicious home-cooked food?</p>
+         
+         <div class="stats-row" id="student-stats-bar">
+            <div class="stat-pill">
+               <div style="font-size:2rem;">🍱</div>
+               <div>
+                  <div style="font-size:1.5rem; font-weight:800; color:var(--secondary);" id="stat-meals">0</div>
+                  <div style="font-size:0.8rem; color:var(--gray-500); font-weight:700; text-transform:uppercase;">Meals Eaten</div>
+               </div>
+            </div>
+            <div class="stat-pill">
+               <div style="font-size:2rem;">💰</div>
+               <div>
+                  <div style="font-size:1.5rem; font-weight:800; color:var(--primary);">₹<span id="stat-saved">0</span></div>
+                  <div style="font-size:0.8rem; color:var(--gray-500); font-weight:700; text-transform:uppercase;">Saved vs Zomato</div>
+               </div>
+            </div>
+            <div class="stat-pill">
+               <div style="font-size:2rem;">🏃</div>
+               <div>
+                  <div style="font-size:1.5rem; font-weight:800; color:var(--secondary);" id="stat-runner">0</div>
+                  <div style="font-size:0.8rem; color:var(--gray-500); font-weight:700; text-transform:uppercase;">Runner Badge</div>
+               </div>
+            </div>
+         </div>
+         
+         <div class="map-card" id="leaflet-map"></div>
+
+         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="font-size:1.8rem;">Nearby Home-Chefs</h2>
+            <div style="display:flex; gap:10px;">
+               <input type="text" id="filter-search" placeholder="Search dish..." oninput="app.renderCooks()" style="width:200px; padding:10px;">
+               <select id="filter-cuisine" onchange="app.renderCooks()" style="width:160px; padding:10px;">
+                 <option value="">All Cuisines</option>
+                 <option value="north">North Indian</option>
+                 <option value="south">South Indian</option>
+               </select>
+            </div>
+         </div>
+
+         <div id="cook-list" class="cook-grid">
+            <!-- Cards injected via JS -->
+         </div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div class="right-sidebar">
+         <div class="card" style="background:var(--secondary); color:white; cursor:pointer;" onclick="app.showView('view-premium-upgrade')">
+            <div class="badge" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:10px; display:inline-block;">PRO STUDENT</div>
+            <h3 style="font-size:1.3rem; margin-bottom:5px;">Upgrade to Premium</h3>
+            <p style="font-size:0.9rem; opacity:0.8;">₹49/month • Priority Booking</p>
+         </div>
+         
+         <div class="card" style="border:2px solid var(--primary);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+               <div style="font-weight:800; font-size:1.1rem;">GharSeMeal Wallet</div>
+               <div class="avatar-circle" style="background:var(--bg-color); border:none; width:30px; height:30px;">💳</div>
+            </div>
+            
+            <div style="text-align:center; padding:20px 0; border-bottom:1px solid var(--gray-200); margin-bottom:20px;">
+               <div style="font-size:0.9rem; color:var(--gray-500); font-weight:700;">AVAILABLE BALANCE</div>
+               <div style="font-size:3rem; font-weight:800; color:var(--primary); line-height:1;">₹<span id="wallet-balance">0</span></div>
+               <div id="wallet-warning" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:bold; margin-top:10px;">⚠️ Low Balance Warning</div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+               <button class="btn btn-outline" style="flex:1; padding:8px; font-size:0.8rem;" onclick="app.addWalletFunds(200)">+ ₹200</button>
+               <button class="btn btn-outline" style="flex:1; padding:8px; font-size:0.8rem;" onclick="app.addWalletFunds(500)">+ ₹500</button>
+               <button class="btn btn-outline" style="flex:1; padding:8px; font-size:0.8rem;" onclick="app.addWalletFunds(1000)">+ ₹1000</button>
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="alert('Payment Gateway Mock Modal')">Add Money</button>
+            
+            <h4 style="font-size:0.9rem; color:var(--gray-500); margin-bottom:10px; text-transform:uppercase;">Recent Transactions</h4>
+            <div id="wallet-history-list" style="display:flex; flex-direction:column; gap:12px; max-height:200px; overflow-y:auto; padding-right:5px;">
+               <!-- Injected JS History -->
+            </div>
+         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COOK PROFILE -->
+  <section id="view-cook-profile" class="view">
+    <div class="profile-hero"></div>
+    <div class="profile-container">
+       
+       <div class="main-content" style="flex:1; padding-bottom:50px;">
+          <div class="card" style="margin-top:-60px; margin-bottom:40px; position:relative; z-index:10;">
+             <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+               <div style="display:flex; gap:20px; align-items:flex-end;">
+                  <div id="cp-avatar" class="avatar-circle" style="width:100px; height:100px; font-size:2rem; border-width:4px;">C</div>
+                  <div style="padding-bottom:10px;">
+                     <h1 id="cp-name" style="font-size:2.5rem; margin-bottom:5px;">Cook Name</h1>
+                     <div style="display:flex; gap:15px; align-items:center;">
+                        <span style="color:var(--primary); font-weight:800; font-size:1.1rem;">★ <span id="cp-rating">4.5</span></span>
+                        <span style="color:var(--gray-500); font-weight:600;">(<span id="cp-review-count">120</span> reviews)</span>
+                        <span class="badge" style="background:#10B981; color:white;">ACTIVE NOW</span>
+                        <span class="badge">Hygiene: 100%</span>
+                     </div>
+                  </div>
+               </div>
+               <div style="display:flex; gap:15px; padding-bottom:10px;">
+                  <button class="btn btn-outline" style="border-color:#10B981; color:#10B981; display:flex; gap:8px; align-items:center;" onclick="window.open('https://wa.me/919999999999','_blank')"><span>💬</span> WhatsApp</button>
+                  <button class="btn btn-primary" onclick="app.showBookingForm()">Book a Meal</button>
+               </div>
+             </div>
           </div>
           
-          <!-- Signup Wizard View -->
-          <div id="cook-signup-view" style="display:none;">
-            <h3 style="text-align:center; color:var(--navy); margin-bottom: 5px;">Become a Chef</h3>
-            
-            <!-- STEP 1 -->
-            <div id="cs-step-1">
-              <p style="text-align:center; font-size:0.85rem; color:var(--gray-500); margin-bottom: 20px;">Step 1 of 3: Basic Info</p>
-              <div class="form-group"><label>Kitchen Name (or Your Name)</label><input type="text" id="cs-kname" required></div>
-              <div class="form-group"><label>Your Full Name</label><input type="text" id="cs-name" required></div>
-              <div class="form-group"><label>Locality / Area</label><input type="text" id="cs-area" required></div>
-              <div class="form-group"><label>Phone Number</label><input type="tel" id="cs-phone" required></div>
-              <div class="form-group"><label>Years of Cooking Experience</label><input type="number" id="cs-exp" required min="0"></div>
-              <div class="form-group"><label>Password</label><input type="password" id="cs-pwd" required></div>
-              <button class="btn btn-primary w-100" onclick="app.cookWizardNext(2)">Next: Menu Setup →</button>
-              <div class="auth-toggle" style="margin-top:15px;">Already have an account? <a href="#" onclick="app.toggleCookFormMode('login')">Login</a></div>
+          <h2 style="font-size:1.8rem; margin-bottom:20px;">Today's Special Menu</h2>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:50px;" id="cp-menu-grid">
+             <!-- Dishes Rendered in JS -->
+          </div>
+
+          <h2 style="font-size:1.8rem; margin-bottom:20px;">Student Reviews</h2>
+          <div id="cp-reviews-list" style="display:flex; flex-direction:column; gap:20px; margin-bottom:20px;"></div>
+          <button class="btn btn-outline" onclick="document.getElementById('review-form-area').style.display='block'">Leave a Review</button>
+          
+          <div id="review-form-area" style="display:none; margin-top:20px;" class="card">
+            <h4>Write a Review</h4>
+            <div class="form-group" style="margin-top:15px;">
+              <select id="review-rating"><option value="5">★ 5 - Excellent</option><option value="4">★ 4 - Good</option></select>
             </div>
-            
-            <!-- STEP 2 -->
-            <div id="cs-step-2" style="display:none;">
-              <p style="text-align:center; font-size:0.85rem; color:var(--gray-500); margin-bottom: 20px;">Step 2 of 3: Menu Setup</p>
-              <div class="form-group">
-                <label>Add up to 5 dishes (e.g. Rajma Chawal)</label>
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                  <input type="text" id="cs-newdish-name" placeholder="Dish Name" style="flex:2;">
-                  <select id="cs-newdish-type" style="flex:1;">
-                    <option value="Veg">Veg 🟢</option>
-                    <option value="Non-Veg">Non-Veg 🔴</option>
-                  </select>
+            <div class="form-group">
+              <textarea id="review-comment" rows="3" placeholder="How was the food?"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="app.submitReview()">Post Review</button>
+          </div>
+       </div>
+
+       <div class="right-sidebar" style="width:340px; margin-top:-60px;">
+          <div class="card" style="border:2px solid var(--primary); position:relative; z-index:10;">
+             <div class="badge" style="position:absolute; top:-12px; right:20px; background:var(--primary); color:white;">POPULAR</div>
+             <h3 style="font-size:1.4rem; margin-bottom:20px; border-bottom:1px solid var(--gray-200); padding-bottom:15px;">Subscription Plans</h3>
+             
+             <div style="margin-bottom:20px; cursor:pointer; padding:15px; border-radius:12px; border:1px solid var(--primary); background:rgba(232,71,10,0.05);" onclick="document.getElementById('booking-plan-route').value='week'; app.showBookingForm()">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                   <div style="font-weight:800;">Weekly Plan</div>
+                   <div style="color:var(--primary); font-weight:800;">10% OFF</div>
                 </div>
-                <button class="btn btn-secondary w-100" style="padding:10px; font-size:0.9rem;" onclick="app.addDishToWizard()">+ Add Dish</button>
-              </div>
-              <ul id="cs-dish-list" style="margin-bottom:20px; font-size:0.9rem; padding-left:20px; color:var(--gray-800);"></ul>
-              <div class="form-group"><label>Standard Price per Meal (₹)</label><input type="number" id="cs-price" required></div>
-              <div class="form-group"><label>10% Weekly Discount Promo?</label><select id="cs-weekly"><option value="yes">Yes, offer to students</option><option value="no">No</option></select></div>
-              <div style="display:flex; gap:10px;">
-                <button class="btn w-100" style="background:var(--gray-200);" onclick="app.cookWizardNext(1)">← Back</button>
-                <button class="btn btn-primary w-100" onclick="app.cookWizardNext(3)">Next: Preview →</button>
-              </div>
+                <p style="font-size:0.85rem; color:var(--gray-500);">7 days flexible schedule. Pick your days.</p>
+             </div>
+
+             <div style="cursor:pointer; padding:15px; border-radius:12px; border:1px solid var(--gray-200);" onclick="document.getElementById('booking-plan-route').value='meal'; app.showBookingForm()">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                   <div style="font-weight:800;">Standard Meal</div>
+                   <div style="color:var(--secondary); font-weight:800;" id="cp-price">₹0</div>
+                </div>
+                <p style="font-size:0.85rem; color:var(--gray-500);">One-off booking for lunch or dinner.</p>
+             </div>
+             <input type="hidden" id="booking-plan-route" value="meal">
+          </div>
+       </div>
+    </div>
+  </section>
+
+  <!-- BOOKING CONFIG -->
+  <section id="view-booking" class="view">
+    <div style="max-width:1000px; margin:40px auto; width:100%;">
+       <button class="btn btn-outline" style="margin-bottom:20px; border:none;" onclick="app.showView('view-cook-profile')">← Back to Profile</button>
+       <h1 style="font-size:2.5rem; margin-bottom:10px;">Configure Your Meal Plan</h1>
+       <div id="booking-details" style="font-size:1.1rem; color:var(--primary); font-weight:700; margin-bottom:30px;">Ordering from: Cook Name</div>
+       
+       <form onsubmit="app.handleBookingSubmit(event)">
+          <div class="card" style="margin-bottom:30px;">
+             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;">
+                <div class="form-group" style="margin:0;">
+                   <label>Payment Plan</label>
+                   <select id="b-plan" required onchange="app.calculateTotal()">
+                     <option value="meal">Pay Per Meal</option>
+                     <option value="week">Pay Per Week (Flexible Scheduler)</option>
+                   </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                   <label>Start Date</label>
+                   <input type="date" id="b-date" required>
+                </div>
+                <div class="form-group" style="margin:0;">
+                   <label>Pickup Time</label>
+                   <select id="b-time" required>
+                     <option value="1:00 PM">1:00 PM (Lunch)</option>
+                     <option value="8:00 PM">8:00 PM (Dinner)</option>
+                   </select>
+                </div>
+             </div>
+          </div>
+
+          <div id="b-weekly-grid" style="display:none;" class="card">
+             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--gray-200); padding-bottom:15px;">
+                <div>
+                   <h3 style="font-size:1.4rem;">Weekly Scheduler</h3>
+                   <p style="font-size:0.9rem; color:var(--gray-500);">Toggle your preferred slots. Skips are allowed 2hrs prior.</p>
+                </div>
+                <div class="badge" style="background:rgba(16, 185, 129, 0.1); color:#10B981;">Automated Defaults Active</div>
+             </div>
+             
+             <div class="booking-grid" id="b-weekly-list">
+                <!-- JS dynamically injects the 7 cols mapping here -->
+             </div>
+             
+             <p id="b-weekly-summary" style="margin-top:25px; font-weight:800; color:var(--white); font-size:1.2rem; text-align:center; background:var(--primary); padding:10px; border-radius:12px;"></p>
+          </div>
+
+          <div class="card" style="background:var(--footer-bg); color:white; margin-top:20px;">
+             <label style="display:flex; align-items:center; gap:15px; cursor:pointer; color:white;">
+               <input type="checkbox" id="b-runner" style="width:24px; height:24px; accent-color:var(--primary);" onchange="app.calculateTotal()">
+               <div>
+                  <div style="font-weight:800; font-size:1.2rem;">Runner Program (Free Meals!)</div>
+                  <div style="font-size:0.9rem; opacity:0.8; font-weight:normal;">Pick up food for 5 neighbors from this cook, and your meal is completely <strong>free</strong>.</div>
+               </div>
+             </label>
+          </div>
+
+          <div class="card" style="margin-top:30px; border:2px solid var(--primary);">
+             <h3 style="font-size:1.4rem; margin-bottom:20px;">Order Overview</h3>
+             <div class="form-group">
+                <label>Confirm Payment Method</label>
+                <select id="b-pay-method" onchange="app.checkWalletDeficit()">
+                  <option value="wallet">GharSeMeal Wallet (Balance: ₹<span id="b-wallet-amt">0</span>)</option>
+                  <option value="cash">Cash on Pickup</option>
+                  <option value="upi">UPI / Card</option>
+                </select>
+             </div>
+             <div id="b-wallet-alert" style="display:none; color:#DC2626; font-weight:700; margin-bottom:15px; background:rgba(220,38,38,0.1); padding:10px; border-radius:8px;">⚠️ Insufficient Wallet Balance. Add funds or select Cash.</div>
+             
+             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:30px; padding-top:20px; border-top:1px solid var(--gray-200);">
+                <div>
+                   <div style="font-weight:800; font-size:1.2rem;">Total Amount</div>
+                   <div style="font-size:0.8rem; color:var(--gray-500); font-weight:700; letter-spacing:1px;">SECURE CHECKOUT POWERED BY G-PAY</div>
+                </div>
+                <div id="b-total-amount" style="font-size:2.5rem; font-weight:800; color:var(--primary);">₹0</div>
+             </div>
+             <button type="submit" class="btn btn-primary" id="b-submit-btn" style="width:100%; margin-top:20px; padding:20px; font-size:1.2rem;">Confirm Booking</button>
+          </div>
+       </form>
+    </div>
+  </section>
+
+  <!-- CONFIRMATION PAGE -->
+  <section id="view-booking-success" class="view">
+    <div style="text-align:center; padding:60px 20px;">
+       <div style="width:100px; height:100px; background:#10B981; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:4rem; margin:0 auto 30px;">✓</div>
+       <h1 style="font-size:3rem; margin-bottom:40px; color:var(--secondary);">Booking Confirmed!</h1>
+       
+       <div class="confirm-grid">
+          <div class="card" style="text-align:left;">
+             <div style="font-size:0.9rem; color:var(--gray-500); font-weight:800; margin-bottom:10px;">ORDER DETAILS</div>
+             <h2 id="success-cook" style="font-size:1.8rem; margin-bottom:5px;">Cook Name</h2>
+             <div style="color:var(--primary); font-weight:700; margin-bottom:20px;">📍 View Map Directions</div>
+             <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; border-top:1px solid var(--gray-200); padding-top:20px;">
+                <div><div style="font-size:0.8rem; color:var(--gray-500);">MEAL TYPE</div><div id="success-meal" style="font-weight:700;"></div></div>
+                <div><div style="font-size:0.8rem; color:var(--gray-500);">DATE</div><div id="success-date" style="font-weight:700;"></div></div>
+                <div><div style="font-size:0.8rem; color:var(--gray-500);">PICKUP TIME</div><div id="success-time" style="font-weight:700;"></div></div>
+                <div><div style="font-size:0.8rem; color:var(--gray-500);">TOTAL PAID</div><div id="success-total" style="font-weight:800; font-size:1.2rem; color:var(--primary);"></div></div>
+             </div>
+          </div>
+          <div class="qr-card">
+             <div style="font-size:1.1rem; font-weight:700; margin-bottom:10px;">Show this code to the cook</div>
+             <div id="success-code" style="font-size:4rem; font-weight:800; color:var(--secondary); letter-spacing:4px; margin:20px 0;">#0000</div>
+             <div style="width:150px; height:150px; background:var(--gray-200); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--gray-500); font-size:0.8rem; font-weight:bold;">[ QR CODE ]</div>
+          </div>
+       </div>
+
+       <div style="margin-top:50px; display:flex; justify-content:center; gap:20px;">
+          <button class="btn btn-primary" onclick="app.showView('view-student-tracker')" style="padding:15px 40px; font-size:1.1rem;">View Meal Tracker</button>
+          <button class="btn btn-outline" onclick="app.showView('view-student-dashboard')" style="padding:15px 40px; font-size:1.1rem;">Back to Home</button>
+       </div>
+    </div>
+  </section>
+
+  <!-- MEAL TRACKER -->
+  <section id="view-student-tracker" class="view">
+    <div style="max-width:1400px; margin:40px auto; width:100%;">
+       <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:40px;">
+          <div>
+             <button class="btn btn-outline" style="margin-bottom:10px; border:none; padding:0;" onclick="app.showView('view-student-dashboard')">← Dashboard</button>
+             <h1 style="font-size:2.5rem;">Weekly Meal Tracker</h1>
+             <p style="font-weight:600; color:var(--gray-500);">Current Week: Nov 14 - Nov 20</p>
+          </div>
+          <div style="display:flex; gap:20px;">
+             <div class="card" style="padding:15px 30px; text-align:center;">
+                <div style="font-size:0.8rem; color:var(--gray-500); font-weight:800;">TOTAL MEALS</div>
+                <div style="font-size:1.8rem; font-weight:800; color:var(--secondary);"><span id="tracker-total-meals">0</span><span style="font-size:1rem; color:var(--gray-500);">/14</span></div>
+             </div>
+             <div class="card" style="padding:15px 30px; text-align:center; background:var(--primary); color:white;">
+                <div style="font-size:0.8rem; font-weight:800; opacity:0.8;">SAVED VS ZOMATO</div>
+                <div style="font-size:1.8rem; font-weight:800;">₹<span id="tracker-amount-saved">0</span></div>
+             </div>
+          </div>
+       </div>
+       
+       <div id="tracker-calendar-list" class="tracker-calendar">
+          <!-- JS 7 column injection -->
+       </div>
+
+       <div class="card" style="background:var(--footer-bg); color:white; margin-top:40px; display:flex; justify-content:space-between; align-items:center; padding:30px 40px;">
+          <div>
+             <h3 style="font-size:1.5rem; margin-bottom:5px;">Maximize your savings!</h3>
+             <p style="font-size:1rem; opacity:0.8;">You're 2 meals away from a free runner badge for next week.</p>
+          </div>
+          <button class="btn btn-primary">View Savings Report</button>
+       </div>
+    </div>
+  </section>
+
+  <!-- COOK AUTH WIZARD -->
+  <section id="view-cook-auth" class="view">
+    <div class="auth-split">
+      <div class="auth-left" style="background:var(--secondary);">
+         <div class="badge" style="background:rgba(255,255,255,0.1); color:white; display:inline-block; margin-bottom:20px;">FOR HOME CHEFS</div>
+         <h1 style="font-size:3.5rem; margin-bottom:20px; line-height:1.1;">Share your<br><span style="color:var(--primary);">culinary magic.</span></h1>
+         <p style="font-size:1.2rem; line-height:1.6; margin-bottom:40px; opacity:0.9;">Join 50+ home chefs making passive income right from their home kitchen. Zero commissions, full control.</p>
+         <div class="card" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(10px); color:white;">
+            <p style="font-size:1.1rem; font-style:italic; margin-bottom:15px;">"GharSeMeal helped me pay my daughter's tuition just by cooking exactly what my family eats every day!"</p>
+            <div style="font-weight:800;">- Meenakshi Aunty</div>
+         </div>
+      </div>
+      <div class="auth-right" style="align-items:stretch;">
+         <div style="max-width:500px; width:100%; margin:0 auto;">
+            <div id="cook-login-view">
+               <h2 style="font-size:2rem; margin-bottom:30px; text-align:center;">Chef Central Login</h2>
+               <form onsubmit="app.handleCookLogin(event)">
+                  <div class="form-group">
+                     <label>Email Address</label>
+                     <input type="email" id="cl-email" value="cook@test.com" required>
+                  </div>
+                  <div class="form-group">
+                     <label>Password</label>
+                     <input type="password" id="cl-password" value="password" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;">Enter Kitchen Dashboard</button>
+                  <div class="auth-toggle">
+                     <span>Not an active chef?</span> <a href="#" onclick="app.toggleCookFormMode('signup')">Apply to Cook</a>
+                  </div>
+               </form>
             </div>
             
-            <!-- STEP 3 -->
-            <div id="cs-step-3" style="display:none;">
-              <p style="text-align:center; font-size:0.85rem; color:var(--gray-500); margin-bottom: 20px;">Step 3 of 3: Layout Preview</p>
-              <div id="cs-preview-card" style="margin-bottom:25px;"></div>
-              <div style="display:flex; gap:10px;">
-                <button class="btn w-100" style="background:var(--gray-200);" onclick="app.cookWizardNext(2)">← Edit</button>
-                <button class="btn btn-primary w-100" style="background:#10B981;" onclick="app.submitCookSignup()">Go Live! 🚀</button>
-              </div>
+            <div id="cook-signup-view" style="display:none;">
+               <div style="display:flex; justify-content:space-between; margin-bottom:30px; font-weight:800; font-size:0.9rem; color:var(--gray-500);">
+                  <div id="step-indicator-1" style="color:var(--primary);">1. BASIC INFO</div>
+                  <div id="step-indicator-2">2. MENU SETUP</div>
+                  <div id="step-indicator-3">3. GO LIVE</div>
+               </div>
+               
+               <form id="cook-wizard-form" onsubmit="event.preventDefault()">
+                  <div id="cw-step-1">
+                     <h2 style="font-size:1.8rem; margin-bottom:20px;">Kitchen Details</h2>
+                     <div class="form-group"><label>Kitchen Name</label><input type="text" id="cs-kname" required></div>
+                     <div class="form-group"><label>Your Name</label><input type="text" id="cs-name" required></div>
+                     <div class="form-group"><label>Locality / Area</label><input type="text" id="cs-area" required></div>
+                     <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="app.cookWizardNext(2)">Continue to Menu Setup →</button>
+                  </div>
+                  
+                  <div id="cw-step-2" style="display:none;">
+                     <h2 style="font-size:1.8rem; margin-bottom:20px;">Build Your Menu</h2>
+                     <div class="form-group">
+                        <label>Standard Price per Meal (₹)</label>
+                        <input type="number" id="cs-price" min="40" max="250" value="100">
+                     </div>
+                     <div class="card" style="background:var(--bg-color); border:1px solid var(--gray-200); box-shadow:none; padding:20px; margin-bottom:20px;">
+                        <h4 style="margin-bottom:10px; font-size:1rem;">Add Dish to Menu</h4>
+                        <div style="display:flex; gap:10px;">
+                           <input type="text" id="cs-dish-input" placeholder="e.g., Rajma Chawal">
+                           <button type="button" class="btn btn-outline" onclick="app.addWizardDish()">Add</button>
+                        </div>
+                        <ul id="cs-dish-list" style="margin-top:15px; padding-left:20px; font-weight:600;"></ul>
+                     </div>
+                     <div style="display:flex; gap:15px; margin-top:30px;">
+                        <button class="btn btn-outline" style="flex:1;" onclick="app.cookWizardNext(1)">← Back</button>
+                        <button class="btn btn-primary" style="flex:1;" onclick="app.cookWizardNext(3)">Preview Profile →</button>
+                     </div>
+                  </div>
+                  
+                  <div id="cw-step-3" style="display:none;">
+                     <h2 style="font-size:1.8rem; margin-bottom:10px;">Previewing Your Profile</h2>
+                     <p style="margin-bottom:25px; color:var(--gray-500); font-weight:500;">This is exactly how students will see you on the platform.</p>
+                     <div id="cw-preview-card" style="pointer-events:none; margin-bottom:30px;"></div>
+                     <div style="display:flex; gap:15px;">
+                        <button class="btn btn-outline" style="flex:1;" onclick="app.cookWizardNext(2)">← Edit</button>
+                        <button class="btn btn-primary" style="flex:2; background:#10B981; box-shadow:0 4px 12px rgba(16,185,129,0.3);" onclick="app.handleCookSignup()">GO LIVE NOW! 🚀</button>
+                     </div>
+                  </div>
+               </form>
+               <div class="auth-toggle"><span>Already cooking?</span> <a href="#" onclick="app.toggleCookFormMode('login')">Login</a></div>
             </div>
-          </div>
-          
-        </div>
+         </div>
       </div>
-    </section>
-    <!-- STUDENT DASHBOARD -->
-    <section id="view-student-dashboard" class="view">
-      <header class="app-header">
-        <h2>GharSeMeal</h2>
-        <div>
-           <span class="user-badge" id="student-badge">Free Tier</span>
-           <button class="btn-icon" style="margin-left:10px;" onclick="app.logout()">Logout</button>
-        </div>
-      </header>
-      
-      <!-- Greeting and Stats Section -->
-      <div style="background: var(--white); border-bottom:1px solid var(--gray-200); padding: 20px;">
-        <h3 id="student-greeting" style="margin-bottom: 12px; color:var(--navy);">Good morning!</h3>
-        <div class="stats-bar" id="student-stats-bar" style="display:flex; gap: 8px; font-size:0.8rem; flex-wrap:wrap;">
-          <div style="background:var(--off-white); padding:6px 12px; border-radius:30px; border:1px solid var(--gray-200); flex:1; text-align:center;">
-             <span>🍱 <strong id="stat-meals" style="color:var(--navy);">0</strong> <span style="color:var(--gray-500);">meals</span></span>
-          </div>
-          <div style="background:var(--off-white); padding:6px 12px; border-radius:30px; border:1px solid var(--gray-200); flex:1; text-align:center;">
-             <span>💰 ₹<strong id="stat-saved" style="color:var(--saffron);">0</strong> <span style="color:var(--gray-500);">saved</span></span>
-          </div>
-          <div style="background:var(--off-white); padding:6px 12px; border-radius:30px; border:1px solid var(--gray-200); flex:1; text-align:center;">
-             <span>🏃 <strong id="stat-runner" style="color:var(--navy);">0</strong> <span style="color:var(--gray-500);">runner</span></span>
-          </div>
-        </div>
-        <button class="btn btn-primary w-100 mt-4" style="background:var(--saffron); border: 1px solid rgba(255,255,255,0.2);" onclick="app.showView('view-student-tracker')">📅 View Weekly Meal Tracker</button>
+    </div>
+  </section>
+
+  <!-- COOK DASHBOARD -->
+  <section id="view-cook-dashboard" class="view">
+    <div class="dashboard-layout">
+       <div class="left-sidebar">
+         <div class="badge" style="margin-bottom:15px; text-align:center;">Chef Central</div>
+         <div class="card" style="padding:15px; margin-bottom:15px; text-align:center; background:rgba(16,185,129,0.1); border:1px solid #10B981; color:#10B981;">
+            <div style="font-weight:800; font-size:1.1rem;">● KITCHEN OPEN</div>
+         </div>
+         <a href="#" class="sidebar-link active"><span>📊</span> Dashboard</a>
+         <a href="#" class="sidebar-link"><span>🍳</span> My Menu</a>
+         <a href="#" class="sidebar-link"><span>💰</span> Earnings</a>
+         <a href="#" class="sidebar-link"><span>📦</span> Past Orders</a>
       </div>
 
-      <div class="premium-banner" onclick="app.showView('view-premium-upgrade')">
-        <div class="premium-title">🌟 Upgrade to Premium — ₹49/month</div>
-        <div class="premium-subtitle">Unlock verified cooks & priority booking</div>
-      </div>
-
-      <div class="map-container">
-        <div id="leaflet-map"></div>
-      </div>
-      
-      <div class="content-padding">
-        <div class="cook-list-header">
-          <h3>Nearby Home-Chefs</h3>
-        </div>
-        
-        <div class="filter-section">
-          <div class="search-box">
-            <span style="opacity: 0.6;">🔍</span>
-            <input type="text" id="filter-search" placeholder="Search cook or dish..." oninput="app.renderCooks()">
-          </div>
-          <select id="filter-cuisine" onchange="app.renderCooks()">
-            <option value="">All Cuisines</option>
-            <option value="north">North Indian</option>
-            <option value="south">South Indian</option>
-            <option value="diet">Diet & Healthy</option>
-          </select>
-        </div>
-
-        <div id="cook-list" class="cook-list">
-          <!-- Cards injected via JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- PREMIUM SUB PAGE -->
-    <section id="view-premium-upgrade" class="view">
-      <header class="app-header">
-        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
-        <h2>Upgrade Plan</h2>
-      </header>
-      <div class="content-padding">
-        <div style="text-align:center; padding:15px 0 25px;">
-          <h2 style="color:var(--navy); margin-bottom:10px; font-size:1.8rem;">Eat better.<br>Save more.</h2>
-          <p style="color:var(--gray-500); font-size:0.95rem;">Join 500+ students enjoying premium benefits.</p>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:15px; margin-bottom: 20px;">
-          <!-- Basic Plan -->
-          <div class="stats-card" style="border: 2px solid var(--gray-200); position:relative;">
-            <h3 style="color:var(--navy); margin-bottom:5px;">Basic Plan</h3>
-            <h2 style="margin-bottom:15px; font-size:1.8rem;">₹49 <span style="font-size:0.9rem; font-weight:normal; color:var(--gray-500);">/ month</span></h2>
-            <ul style="list-style-type:none; padding:0; margin-bottom:20px; line-height:1.8; font-size:0.95rem; color:var(--gray-800);">
-              <li>✅ Standard Cooks Access</li>
-              <li>✅ Pay-per-meal Booking</li>
-              <li style="opacity:0.5;">❌ No Weekly Discount</li>
-              <li style="opacity:0.5;">❌ No Runner Bonus</li>
-            </ul>
-            <button class="btn btn-secondary w-100" onclick="alert('Proceeding to mock gateway for Basic Plan!')">Select Basic</button>
-          </div>
-
-          <!-- Premium Plan -->
-          <div class="stats-card" style="border: 2px solid var(--saffron); position:relative; background:#FFFAF0;">
-            <div style="position:absolute; top:-12px; right:15px; background:var(--saffron); color:white; font-size:0.75rem; font-weight:bold; padding:4px 10px; border-radius:12px; letter-spacing:0.5px;">🌟 MOST POPULAR</div>
-            <h3 style="color:var(--navy); margin-bottom:5px;">Premium Plan</h3>
-            <h2 style="margin-bottom:15px; font-size:1.8rem;">₹99 <span style="font-size:0.9rem; font-weight:normal; color:var(--gray-500);">/ month</span></h2>
-            <ul style="list-style-type:none; padding:0; margin-bottom:20px; line-height:1.8; font-size:0.95rem; color:var(--gray-800);">
-              <li>✅ Full Access to <strong>Verified Pro Cooks</strong></li>
-              <li>✅ Unlock <strong>10% Weekly Discounts</strong></li>
-              <li>✅ Opt-in for <strong>Runner Bonus</strong> (Free meals)</li>
-              <li>✅ Priority ordering & No wait times</li>
-            </ul>
-            <button class="btn btn-primary w-100" onclick="alert('Proceeding to mock gateway for Premium Plan!')">Upgrade to Premium</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- MEAL TRACKER -->
-    <section id="view-student-tracker" class="view">
-      <header class="app-header">
-        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
-        <h2>Weekly Meal Tracker</h2>
-      </header>
-      
-      <div class="content-padding">
-        <div class="tracker-summary stats-card" style="margin-bottom:0;">
-          <h3 style="margin-bottom: 5px;">This Week's Impact</h3>
-          <p>Total Scheduled Meals: <strong id="tracker-total-meals">0</strong></p>
-          <p style="color: #Fcd34d;">Saved vs Zomato: <strong>₹<span id="tracker-amount-saved">0</span></strong></p>
-        </div>
-        
-        <div id="tracker-calendar-list" style="margin-top: 15px;">
-          <!-- Days mapped via JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- COOK PROFILE -->
-    <section id="view-cook-profile" class="view">
-      <header class="app-header">
-        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
-        <h2>Cook Profile</h2>
-      </header>
-      <div class="content-padding" id="cook-profile-content">
-         <!-- Details injected via JS -->
-      </div>
-    </section>
-
-    <!-- BOOKING PAGE -->
-    <section id="view-booking" class="view">
-      <header class="app-header">
-        <button class="btn-icon" onclick="app.showView('view-cook-profile')">← Back</button>
-        <h2>Book Meal</h2>
-      </header>
-      <div class="content-padding">
-        <div class="booking-card" id="booking-details">
-           <!-- Details injected JS -->
-        </div>
-        <form id="booking-form" onsubmit="app.handleBookingSubmit(event)">
-          <div class="form-group">
-            <label>Meal Type</label>
-            <select id="b-meal-type" required>
-              <option value="lunch">Lunch</option>
-              <option value="dinner">Dinner</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" id="b-date" required>
-          </div>
-          <div class="form-group">
-            <label>Pickup Time Slot</label>
-            <select id="b-time" required>
-              <option value="12:30 PM">12:30 PM - 1:00 PM</option>
-              <option value="1:00 PM">1:00 PM - 1:30 PM</option>
-              <option value="8:00 PM">8:00 PM - 8:30 PM</option>
-              <option value="8:30 PM">8:30 PM - 9:00 PM</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Payment Plan</label>
-            <select id="b-plan" required onchange="app.calculateTotal()">
-              <option value="meal">Pay Per Meal</option>
-              <option value="week">Pay Per Week (Flexible Scheduler)</option>
-            </select>
-          </div>
-          
-          <div id="b-weekly-grid" style="display:none; margin-bottom:20px; font-size:0.85rem;">
-            <p style="font-weight:bold; color:var(--navy); margin-bottom:10px;">Select your slots for the week:</p>
-            <div id="b-weekly-list">
-               <!-- JS injects rows -->
+      <div class="main-content">
+         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1 style="font-size:2.5rem;">Incoming Orders</h1>
+            <div class="badge" style="background:#DC2626; color:white; display:flex; align-items:center; gap:8px;">
+               <span style="display:inline-block; width:8px; height:8px; background:white; border-radius:50%;"></span> LIVE TRACKING
             </div>
-            <p id="b-weekly-summary" style="margin-top:15px; font-weight:bold; color:var(--saffron); font-size:1.1rem; border-top:1px solid var(--gray-200); padding-top:10px; text-align:center;"></p>
-          </div>
+         </div>
+         <div id="cook-orders-list" style="display:flex; flex-direction:column; gap:20px;">
+            <!-- JS injects orders here -->
+         </div>
+      </div>
 
-          <div class="checkbox-group">
-            <input type="checkbox" id="b-runner" onchange="app.calculateTotal()">
-            <label for="b-runner">I'm picking up for 5+ people (Runner gets meal free!)</label>
-          </div>
+      <div class="right-sidebar">
+         <div class="card" style="background:var(--primary); color:white; text-align:center;">
+            <div style="font-size:0.8rem; font-weight:800; opacity:0.8; margin-bottom:5px;">CURRENT RATING</div>
+            <div style="font-size:3rem; font-weight:800;">4.9 <span style="font-size:1.5rem;">★</span></div>
+            <div style="font-size:0.9rem; font-weight:600; opacity:0.9;">Top 5% of Chefs</div>
+         </div>
+         
+         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <div class="card" style="padding:20px 15px; text-align:center;">
+               <div style="font-size:0.7rem; color:var(--gray-500); font-weight:800; margin-bottom:5px;">TODAY'S EARNINGS</div>
+               <div style="font-size:1.5rem; font-weight:800; color:var(--secondary);" id="cd-today-earn">₹0</div>
+            </div>
+            <div class="card" style="padding:20px 15px; text-align:center;">
+               <div style="font-size:0.7rem; color:var(--gray-500); font-weight:800; margin-bottom:5px;">THIS WEEK</div>
+               <div style="font-size:1.5rem; font-weight:800; color:var(--primary);" id="cd-week-earn">₹0</div>
+            </div>
+         </div>
 
-          <div class="form-group" style="margin-top:15px;">
-             <label>Payment Method</label>
-             <select id="b-pay-method" onchange="app.checkWalletDeficit()">
-               <option value="wallet">Pay from GharSeMeal Wallet (Bal: ₹<span id="b-wallet-amt">500</span>)</option>
-               <option value="cash">Cash / UPI at Pickup</option>
-             </select>
-             <p id="b-wallet-alert" style="color:#EF4444; font-size:0.8rem; font-weight:bold; display:none; margin-top:5px;">Insufficient Wallet Balance!</p>
+         <div class="card" style="border:2px solid var(--gray-200);">
+            <h3 style="font-size:1.2rem; margin-bottom:20px; border-bottom:1px solid var(--gray-200); padding-bottom:15px;">Manage Active Menu</h3>
+            <ul id="cd-menu-list" style="list-style:none; display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+               <!-- Injected via JS -->
+            </ul>
+            <div style="display:flex; gap:10px;">
+               <input type="text" id="cd-new-dish" placeholder="e.g. Masala Dosa" style="padding:10px; border-radius:8px;">
+               <button class="btn btn-secondary" style="padding:10px 15px; border-radius:8px;" onclick="app.cookAddDish()">+</button>
+            </div>
+         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBSCRIPTION UPGRADE -->
+  <section id="view-premium-upgrade" class="view">
+    <div style="max-width:900px; margin:40px auto; width:100%; text-align:center;">
+       <button class="btn btn-outline" style="margin-bottom:20px; border:none;" onclick="app.showView('view-student-dashboard')">← Return</button>
+       <div style="font-size:0.9rem; color:var(--gray-500); font-weight:800; letter-spacing:2px; margin-bottom:10px;">ELEVATE YOUR DINING</div>
+       <h1 style="font-size:3rem; margin-bottom:60px;">The Modern Hearth<br>Subscription Plans</h1>
+
+       <div class="sub-grid">
+          <div class="card" style="text-align:left; border:1px solid var(--gray-200); display:flex; flex-direction:column;">
+             <h2 style="font-size:1.8rem; margin-bottom:10px;">Basic App</h2>
+             <div style="font-size:3rem; font-weight:800; margin-bottom:20px;">₹49<span style="font-size:1rem; color:var(--gray-500);">/month</span></div>
+             <p style="color:var(--gray-500); margin-bottom:30px; line-height:1.6;">Essential features for the occasional neighborhood diner.</p>
+             <ul style="list-style:none; flex:1; display:flex; flex-direction:column; gap:15px; font-weight:600;">
+                <li>✓ Browse nearby cooks</li>
+                <li>✓ Standard booking logic</li>
+                <li>✓ Basic Wallet limits</li>
+             </ul>
+             <button class="btn btn-outline" style="width:100%; margin-top:30px;" disabled>Currently Active</button>
           </div>
           
-          <div class="total-price" id="b-total-text">
-            Total: <span id="b-total-amount">₹0</span>
+          <div class="card" style="text-align:left; background:var(--primary); color:white; position:relative; display:flex; flex-direction:column; transform:scale(1.05); box-shadow:0 20px 40px rgba(232,71,10,0.3);">
+             <div class="badge" style="position:absolute; top:-15px; right:30px; background:var(--secondary); color:white;">MOST POPULAR</div>
+             <h2 style="font-size:1.8rem; margin-bottom:10px;">PRO Student</h2>
+             <div style="font-size:3rem; font-weight:800; margin-bottom:20px;">₹99<span style="font-size:1rem; opacity:0.8;">/month</span></div>
+             <p style="opacity:0.9; margin-bottom:30px; line-height:1.6;">Unlock complete priority access and runner rewards completely automatically.</p>
+             <ul style="list-style:none; flex:1; display:flex; flex-direction:column; gap:15px; font-weight:600;">
+                <li>✓ Priority queue on high-demand chefs</li>
+                <li>✓ Zero transaction fees on Wallet topups</li>
+                <li>✓ 2x multiplier on Runner Badge slots</li>
+                <li>✓ Exclusive "Pro-Only" Kitchen unlocks</li>
+             </ul>
+             <button class="btn" style="width:100%; margin-top:30px; background:white; color:var(--primary);">Upgrade to Premium</button>
           </div>
+       </div>
+       
+       <div style="display:flex; justify-content:center; gap:40px; margin-top:60px; color:var(--gray-500); font-weight:600;">
+          <div>🔒 Secure Payments</div>
+          <div>📄 No Commitment</div>
+          <div>📞 Priority Support</div>
+       </div>
+    </div>
+  </section>
 
-          <button id="b-submit-btn" type="submit" class="btn btn-primary w-100">Confirm Booking</button>
-        </form>
-      </div>
-    </section>
-
-    <!-- BOOKING SUCCESS -->
-    <section id="view-booking-success" class="view">
-      <div class="landing-content" style="background: var(--off-white); color: var(--navy); padding-top:40px; justify-content: flex-start;">
-        <div style="font-size: 4.5rem; color: #10B981; margin-bottom: 5px;">✅</div>
-        <h2 style="font-size: 1.8rem; margin-bottom: 5px;">Booking Confirmed!</h2>
-        <p style="color: var(--gray-500); margin-bottom: 30px; font-weight:500;">Your meal is successfully scheduled.</p>
-        
-        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: var(--shadow); width: 100%; max-width: 350px; text-align: left; margin-bottom:30px;">
-          <p style="margin-bottom: 10px;"><strong>👨‍🍳 Cook:</strong> <span id="success-cook">Aunty Sarita</span></p>
-          <p style="margin-bottom: 10px;"><strong>🍱 Meal:</strong> <span id="success-meal">Lunch</span></p>
-          <p style="margin-bottom: 10px;"><strong>🕛 Time:</strong> <span id="success-time">1:00 PM</span> (<span id="success-date">2026-04-06</span>)</p>
-          <hr style="border: 0; border-top: 1px solid var(--gray-200); margin: 20px 0;">
-          <div style="text-align: center; background: var(--off-white); padding: 20px; border-radius: 8px; border: 1px dashed var(--gray-500); margin-bottom: 20px;">
-            <p style="font-size: 0.85rem; color: var(--gray-500); margin-bottom: 5px; font-weight:bold;">Show this code to the cook</p>
-            <h1 style="font-size: 3rem; letter-spacing: 2px; color: var(--saffron); margin: 0;" id="success-code">#4821</h1>
-          </div>
-          <p style="text-align: center; font-size: 1.2rem; font-weight: bold; margin-bottom: 0;">Total Paid: <span id="success-total" style="color: var(--saffron);">₹80</span></p>
-        </div>
-
-        <div style="width: 100%; max-width: 350px;">
-          <button class="btn btn-primary w-100" style="margin-bottom: 15px;" onclick="app.showView('view-student-tracker')">📅 View Meal Tracker</button>
-          <button class="btn btn-secondary w-100" onclick="app.showView('view-student-dashboard')">🏠 Back to Home</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- COOK DASHBOARD -->
-    <section id="view-cook-dashboard" class="view">
-      <header class="app-header">
-        <h2>Cook Dashboard</h2>
-        <button class="btn-icon" onclick="app.logout()">Logout</button>
-      </header>
-      
-      <div class="content-padding">
-        
-        <h3 style="margin-bottom: 15px; color: var(--navy);">Your Stats</h3>
-        <div style="display:flex; flex-wrap: wrap; gap:15px; margin-bottom: 25px;">
-          <div class="stats-card" style="flex:1 1 25%; background:var(--white); box-shadow:var(--shadow); padding:15px; border-radius:12px; border-top:4px solid var(--saffron); color:var(--navy);">
-            <p style="font-size:0.85rem; color:var(--gray-500); margin-bottom:5px; font-weight:bold;">Today's Earnings</p>
-            <h3 style="font-size: 1.5rem; margin:0;">₹<span id="cook-earn-today">0</span></h3>
-          </div>
-          <div class="stats-card" style="flex:1 1 25%; background:var(--white); box-shadow:var(--shadow); padding:15px; border-radius:12px; border-top:4px solid #10B981; color:var(--navy);">
-            <p style="font-size:0.85rem; color:var(--gray-500); margin-bottom:5px; font-weight:bold;">This Week's Earnings</p>
-            <h3 style="font-size: 1.5rem; margin:0;">₹<span id="cook-earn-week">0</span></h3>
-          </div>
-          <div class="stats-card" style="flex:1 1 25%; background:var(--white); box-shadow:var(--shadow); padding:15px; border-radius:12px; border-top:4px solid #3B82F6; color:var(--navy);">
-            <p style="font-size:0.85rem; color:var(--gray-500); margin-bottom:5px; font-weight:bold;">Total Orders Today</p>
-            <h3 style="font-size: 1.5rem; margin:0;"><span id="cook-orders-today">0</span></h3>
-          </div>
-        </div>
-
-        <div class="stats-card">
-          <p>Rating: 4.8 / 5</p>
-          <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">
-          <h4>Manage Active Menu</h4>
-          <ul id="cook-menu-list" style="margin: 10px 0 15px 20px; line-height: 1.6; list-style-type: none; padding: 0;">
-             <!-- Injected via JS -->
+  <!-- GLOBAL FOOTER -->
+  <footer class="global-footer">
+    <div class="footer-grid">
+       <div class="footer-col">
+          <h2 style="color:var(--white); font-size:1.8rem; margin-bottom:15px;">GharSeMeal</h2>
+          <p style="line-height:1.6;">Connecting students with local home chefs for quality, affordable, and hygienic meals every single day.</p>
+       </div>
+       <div class="footer-col">
+          <h4>Platform</h4>
+          <ul class="footer-links">
+             <li><a href="#">Browse Cooks</a></li>
+             <li><a href="#">Student Perks</a></li>
+             <li><a href="#">Runner Program</a></li>
+             <li><a href="#">Pro Subscription</a></li>
           </ul>
-          <div style="display: flex; gap: 10px;">
-            <input type="text" id="new-menu-item" placeholder="Add new dish..." style="flex: 1; padding: 8px; border-radius: 4px; border: none; outline: none; color: black;">
-            <button class="btn btn-primary" style="padding: 8px 15px;" onclick="app.addMenuItem()">Add</button>
+       </div>
+       <div class="footer-col">
+          <h4>Chefs</h4>
+          <ul class="footer-links">
+             <li><a href="#">Apply to Cook</a></li>
+             <li><a href="#">Kitchen Rules</a></li>
+             <li><a href="#">Earnings Guide</a></li>
+             <li><a href="#">Success Stories</a></li>
+          </ul>
+       </div>
+       <div class="footer-col">
+          <h4>Join our Newsletter</h4>
+          <p style="line-height:1.6; margin-bottom:15px;">Get weekly updates on new kitchens in your neighborhood.</p>
+          <div style="display:flex; gap:10px;">
+             <input type="email" placeholder="Email Address" style="background:rgba(255,255,255,0.1); border:none; color:white;">
+             <button class="btn btn-primary" style="border-radius:12px; padding:12px 16px;">→</button>
           </div>
-        </div>
-        
-        <h3 class="mt-4">Incoming Orders</h3>
-        <div id="incoming-orders-list">
-           <!-- Injected via JS -->
-        </div>
-      </div>
-    </section>
+       </div>
+    </div>
+    <div class="footer-bottom">
+       &copy; 2026 GharSeMeal. All rights reserved. Designed to completely overhaul the PG food ecosystem.
+    </div>
+  </footer>
 
-  </div>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <!-- Main App JS -->
   <script src="app.js"></script>
-
-    <!-- WALLET ADD MONEY -->
-    <section id="view-wallet-add" class="view">
-      <header class="app-header">
-        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
-        <h2>Add Money</h2>
-      </header>
-      <div class="content-padding">
-        <h3 style="text-align:center; color:var(--navy); margin:20px 0;">Select Amount to Add</h3>
-        <button class="btn btn-secondary w-100" style="margin-bottom:15px; font-size:1.2rem; padding:15px; border:2px solid var(--saffron); color:var(--navy); font-weight:bold;" onclick="app.addWalletFunds(200)">+ ₹200</button>
-        <button class="btn btn-secondary w-100" style="margin-bottom:15px; font-size:1.2rem; padding:15px; border:2px solid var(--saffron); color:var(--navy); font-weight:bold;" onclick="app.addWalletFunds(500)">+ ₹500</button>
-        <button class="btn btn-secondary w-100" style="margin-bottom:15px; font-size:1.2rem; padding:15px; background:var(--saffron); color:white; border:none; font-weight:bold;" onclick="app.addWalletFunds(1000)">+ ₹1000 <span style="font-size:0.8rem; font-weight:normal;">(Best Value)</span></button>
-      </div>
-    </section>
-
-    <!-- WALLET HISTORY -->
-    <section id="view-wallet-history" class="view">
-      <header class="app-header">
-        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
-        <h2>Wallet History</h2>
-      </header>
-      <div class="content-padding" id="wallet-history-list">
-         <!-- Mapped by JS -->
-      </div>
-    </section>
 </body>
 </html>

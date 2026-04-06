@@ -51,6 +51,7 @@ const app = {
   authMode: { student: 'login', cook: 'login' },
   
   init() {
+    this.updateGlobalHeader();
     // Scaffold DB
     if (!localStorage.getItem(DB_COOKS_KEY)) {
       localStorage.setItem(DB_COOKS_KEY, JSON.stringify(initialCooks));
@@ -100,60 +101,47 @@ const app = {
     }
   },
 
-  toggleAuthMode(role) {
-    this.authMode[role] = this.authMode[role] === 'login' ? 'signup' : 'login';
-    const isSignup = this.authMode[role] === 'signup';
+  toggleAuthMode(forceMode) {
+    if (typeof forceMode === 'string') {
+       this.authMode['student'] = forceMode;
+    } else {
+       this.authMode['student'] = this.authMode['student'] === 'login' ? 'signup' : 'login';
+    }
+    const isSignup = this.authMode['student'] === 'signup';
     
-    document.getElementById(`${role}-signup-fields`).style.display = isSignup ? 'block' : 'none';
-    document.getElementById(`${role}-auth-title`).textContent = isSignup ? 'Create an account' : 'Login to your account';
-    document.getElementById(`${role}-auth-btn`).textContent = isSignup ? 'Sign Up' : 'Login';
-    document.getElementById(`${role}-toggle-text`).textContent = isSignup ? 'Already have an account?' : "Don't have an account?";
-    document.getElementById(`${role}-toggle-link`).textContent = isSignup ? 'Login' : 'Sign up';
+    document.getElementById('auth-name-group').style.display = isSignup ? 'block' : 'none';
+    document.getElementById('auth-title').textContent = isSignup ? 'Create an account' : 'Welcome Back';
+    document.getElementById('auth-submit-btn').textContent = isSignup ? 'Sign Up' : 'Login to Dashboard';
+    document.getElementById('auth-toggle-text').textContent = isSignup ? 'Already have an account?' : "New to GharSeMeal?";
+    document.getElementById('auth-toggle-link').textContent = isSignup ? 'Login' : 'Create an account';
   },
 
-  handleAuth(e, role) {
+  handleAuthSubmit(e) {
     e.preventDefault();
-    const mode = this.authMode[role];
-    const prefix = role === 'student' ? 'auth-s' : 'auth-c';
-    
-    const name = document.getElementById(`${prefix}-name`).value.trim();
-    const password = document.getElementById(`${prefix}-pass`).value;
+    const mode = this.authMode['student'];
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const name = document.getElementById('auth-name').value.trim() || email.split('@')[0];
     
     const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
     
     if (mode === 'signup') {
-      let newUser = { id: Date.now(), role, name, password };
-      if (role === 'student') {
-        newUser.college = document.getElementById(`${prefix}-college`).value.trim();
-        newUser.address = document.getElementById(`${prefix}-address`).value.trim();
-      }
-      
+      let newUser = { id: Date.now(), role: 'student', name, email, password, walletBalance: 500, walletHistory: [] };
       users.push(newUser);
       localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
       this.currentUser = newUser;
-      
-      // Update form toggle and reset
-      this.authMode[role] = 'login';
-      this.toggleAuthMode(role); // reverse back for next time
-      this.toggleAuthMode(role); // toggle back to logic
     } else {
-      // Login
-      const user = users.find(u => u.role === role && u.name === name && u.password === password);
+      const user = users.find(u => u.role === 'student' && (u.email === email || u.name === email) && u.password === password);
       if (!user) {
-        alert("Invalid name or password.");
+        alert("Invalid email/name or password.");
         return;
       }
       this.currentUser = user;
     }
     
     e.target.reset();
-    
-    // Navigate correctly based on role
-    // Since currentUser is ID'd properly we can use it to fetch the actual cook info later
-    if (role === 'student') {
-        document.getElementById('student-badge').textContent = this.currentUser.name;
-    }
-    this.showView(role === 'student' ? 'view-student-dashboard' : 'view-cook-dashboard');
+    this.updateCurrentUser();
+    this.showView('view-student-dashboard');
   },
 
   logout() {
@@ -364,20 +352,25 @@ const app = {
     const weeklyList = document.getElementById('b-weekly-list');
     if (weeklyList) {
        const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-       weeklyList.innerHTML = days.map(day => `
-         <div style="display:flex; align-items:center; margin-bottom:8px; background:var(--off-white); padding:10px; border-radius:8px; flex-wrap:wrap;">
-           <div style="width:50px; font-weight:bold; color:var(--navy);">${day}</div>
-           <label style="margin-right:15px; display:flex; align-items:center; gap:7px; cursor:pointer;">
-             <input type="checkbox" class="wk-slot" style="accent-color:var(--saffron); transform:scale(1.2); cursor:pointer;" data-day="${day}" data-slot="breakfast" onchange="app.calculateTotal()"> <span style="padding-top:2px;">Breakfast 8AM</span>
+       weeklyList.innerHTML = days.map(day => {
+         const isSunday = day === 'Sun';
+         return `
+         <div class="booking-day-col">
+           <div style="font-weight:800; color:var(--secondary); font-size:1.1rem; border-bottom:2px solid #E2E4E9; padding-bottom:10px;">${day}</div>
+           <label class="meal-check-slot">
+             <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">BRKFST</span>
+             <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="breakfast" onchange="app.calculateTotal()" ${isSunday ? 'checked' : ''}>
            </label>
-           <label style="margin-right:15px; display:flex; align-items:center; gap:7px; cursor:pointer;">
-             <input type="checkbox" class="wk-slot" style="accent-color:var(--saffron); transform:scale(1.2); cursor:pointer;" data-day="${day}" data-slot="lunch" onchange="app.calculateTotal()" checked> <span style="padding-top:2px;">Lunch 1PM</span>
+           <label class="meal-check-slot">
+             <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">LUNCH</span>
+             <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="lunch" onchange="app.calculateTotal()" checked>
            </label>
-           <label style="display:flex; align-items:center; gap:7px; cursor:pointer;">
-             <input type="checkbox" class="wk-slot" style="accent-color:var(--saffron); transform:scale(1.2); cursor:pointer;" data-day="${day}" data-slot="dinner" onchange="app.calculateTotal()" checked> <span style="padding-top:2px;">Dinner 8PM</span>
+           <label class="meal-check-slot">
+             <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">DINNER</span>
+             <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="dinner" onchange="app.calculateTotal()" checked>
            </label>
          </div>
-       `).join('');
+       `}).join('');
     }
 
     this.showView('view-booking');
@@ -766,8 +759,8 @@ const app = {
     let scheduledCount = 0;
     
     this.currentUser.tracker.forEach((dayData, dayIdx) => {
-       html += `<div class="tracker-day" style="background:var(--white); border-radius:8px; box-shadow:var(--shadow); padding:15px; margin-bottom:12px;">
-         <h4 style="color:var(--navy); margin-bottom:10px; border-bottom:1px solid var(--gray-200); padding-bottom:5px;">${dayData.day}</h4>
+       html += `<div class="tracker-day">
+         <div class="tracker-day-title">${dayData.day}</div>
        `;
        
        ['breakfast', 'lunch', 'dinner'].forEach(type => {
@@ -775,24 +768,20 @@ const app = {
          if (meal) {
             scheduledCount++;
             let badgeColor = meal.status === 'Picked Up' ? 'background:#10B981;color:white;' : 
-                             meal.status === 'Missed' ? 'background:#EF4444;color:white;' : 
+                             meal.status === 'Missed' ? 'background:#DC2626;color:white;' : 
                              meal.status === 'Skipped (No Charge)' ? 'background:transparent; color:var(--gray-500); text-decoration:line-through; border:1px solid var(--gray-500);' :
-                             'background:var(--saffron);color:white;';
+                             'background:var(--primary);color:white;';
             
             html += `
-              <div class="meal-slot" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div style="${meal.status === 'Skipped (No Charge)' ? 'opacity:0.6;' : ''}">
-                  <div style="font-weight:bold; font-size:0.9rem; text-transform:capitalize;">${type}</div>
-                  <div style="font-size:0.8rem; color:var(--gray-500);">👨‍🍳 ${meal.cook}</div>
-                </div>
-                <div style="text-align:right;">
-                  <span style="${badgeColor} padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">${meal.status}</span>
-                  ${meal.status === 'Scheduled' ? `<br><button onclick="app.markMealPickedUp(${dayIdx}, '${type}')" style="margin-top:5px; background:var(--navy); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">Pick Up</button> <button onclick="app.skipMeal(${dayIdx}, '${type}')" style="margin-top:5px; background:var(--gray-200); color:var(--navy); border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">Skip</button>` : ''}
-                </div>
+              <div class="tracker-slot">
+                 <div class="tracker-badge" style="${badgeColor}">${meal.status}</div>
+                 <div style="font-weight:700; font-size:0.8rem; text-transform:uppercase; margin-bottom:5px; color:var(--gray-500);">${type}</div>
+                 <div style="font-weight:800; font-size:0.9rem; color:var(--secondary); line-height:1.2;">👨‍🍳 ${meal.cook}</div>
+                 ${meal.status === 'Scheduled' ? `<div style="display:flex; gap:5px; margin-top:10px;"><button class="btn btn-primary" onclick="app.markMealPickedUp(${dayIdx}, '${type}')" style="padding:6px; font-size:0.7rem; flex:1;">Pick Up</button><button class="btn btn-outline" onclick="app.skipMeal(${dayIdx}, '${type}')" style="padding:6px; font-size:0.7rem; flex:1;">Skip</button></div>` : ''}
               </div>
             `;
          } else {
-            html += `<div style="font-size:0.85rem; color:var(--gray-500); margin-bottom:10px;">${type.charAt(0).toUpperCase() + type.slice(1)}: No meal scheduled</div>`;
+            html += `<div class="tracker-slot" style="background:transparent; border:1px dashed var(--gray-200); color:var(--gray-500); text-align:center;"><div style="font-size:0.8rem; font-weight:700; text-transform:uppercase;">${type}</div>No booking</div>`;
          }
        });
        html += `</div>`;
@@ -864,11 +853,41 @@ const app = {
   },
 
   updateCurrentUser() {
-    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
-    const idx = users.findIndex(u => u.id === this.currentUser.id);
-    if(idx > -1) {
-      users[idx] = this.currentUser;
-      localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
+    if (this.currentUser) {
+      const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
+      const idx = users.findIndex(u => u.id === this.currentUser.id);
+      if (idx !== -1) {
+        users[idx] = this.currentUser;
+        localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
+      }
+    }
+    this.updateGlobalHeader();
+  },
+  
+  updateGlobalHeader() {
+    const navActions = document.getElementById('global-nav-actions');
+    if(!navActions) return;
+    
+    if (this.currentUser && this.currentUser.role === 'student') {
+       navActions.innerHTML = `
+         <div class="wallet-pill">
+            <span style="font-size:1.2rem;">💳</span>
+            <span>₹${this.currentUser.walletBalance || 0}</span>
+         </div>
+         <button class="btn btn-primary" style="padding:10px 20px; font-size:0.9rem;" onclick="app.showView('view-student-dashboard')">Add Credit</button>
+         <div class="avatar-circle" onclick="if(confirm('Logout?')) app.logout()" title="Logout" style="background:var(--gray-200); color:var(--secondary); border:none;">
+            ${(this.currentUser.name || 'U').charAt(0).toUpperCase()}
+         </div>
+       `;
+    } else if (this.currentUser && this.currentUser.role === 'cook') {
+       navActions.innerHTML = `
+         <div class="avatar-circle" onclick="if(confirm('Logout?')) app.logout()" title="Logout" style="background:var(--primary); color:white;">C</div>
+       `;
+    } else {
+       navActions.innerHTML = `
+         <button class="btn btn-outline" onclick="app.toggleCookFormMode('login'); app.showView('view-cook-auth')">I'm a Cook</button>
+         <button class="btn btn-primary" onclick="app.toggleAuthMode('login'); app.showView('view-student-auth')">Student Login</button>
+       `;
     }
   }
 };
