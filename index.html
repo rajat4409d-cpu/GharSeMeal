@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GharSeMeal - Ghar Jaisa Khana</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    
+    <!-- LANDING VIEW -->
+    <section id="view-landing" class="view active">
+      <div class="landing-content">
+        <h1 class="logo">GharSeMeal</h1>
+        <p class="tagline">Ghar Jaisa Khana, Ghar Ke Paas.</p>
+        <div class="landing-buttons">
+          <button class="btn btn-primary" onclick="app.loginAs('student')">I'm a Student</button>
+          <button class="btn btn-secondary" onclick="app.loginAs('cook')">I'm a Cook</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STUDENT DASHBOARD -->
+    <section id="view-student-dashboard" class="view">
+      <header class="app-header">
+        <h2>GharSeMeal</h2>
+        <span class="user-badge" id="student-badge">Free Tier</span>
+      </header>
+      
+      <div class="map-container">
+        <div id="leaflet-map"></div>
+      </div>
+      
+      <div class="content-padding">
+        <h3>Nearby Home-Chefs</h3>
+        <div id="cook-list" class="cook-list">
+          <!-- Cards injected via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- COOK PROFILE -->
+    <section id="view-cook-profile" class="view">
+      <header class="app-header">
+        <button class="btn-icon" onclick="app.showView('view-student-dashboard')">← Back</button>
+        <h2>Cook Profile</h2>
+      </header>
+      <div class="content-padding" id="cook-profile-content">
+         <!-- Details injected via JS -->
+      </div>
+    </section>
+
+    <!-- BOOKING PAGE -->
+    <section id="view-booking" class="view">
+      <header class="app-header">
+        <button class="btn-icon" onclick="app.showView('view-cook-profile')">← Back</button>
+        <h2>Book Meal</h2>
+      </header>
+      <div class="content-padding">
+        <div class="booking-card" id="booking-details">
+           <!-- Details injected JS -->
+        </div>
+        <form id="booking-form" onsubmit="app.handleBookingSubmit(event)">
+          <div class="form-group">
+            <label>Meal Type</label>
+            <select id="b-meal-type" required>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="b-date" required>
+          </div>
+          <div class="form-group">
+            <label>Pickup Time Slot</label>
+            <select id="b-time" required>
+              <option value="12:30 PM">12:30 PM - 1:00 PM</option>
+              <option value="1:00 PM">1:00 PM - 1:30 PM</option>
+              <option value="8:00 PM">8:00 PM - 8:30 PM</option>
+              <option value="8:30 PM">8:30 PM - 9:00 PM</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Payment Plan</label>
+            <select id="b-plan" required onchange="app.calculateTotal()">
+              <option value="meal">Pay Per Meal</option>
+              <option value="week">Pay Per Week (Save 10%)</option>
+            </select>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="b-runner" onchange="app.calculateTotal()">
+            <label for="b-runner">I'm picking up for 5+ people (Runner gets meal free!)</label>
+          </div>
+          
+          <div class="total-price">
+            Total: <span id="b-total-amount">₹0</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Confirm Booking</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- COOK DASHBOARD -->
+    <section id="view-cook-dashboard" class="view">
+      <header class="app-header">
+        <h2>Cook Dashboard</h2>
+        <button class="btn-icon" onclick="app.showView('view-landing')">Logout</button>
+      </header>
+      
+      <div class="content-padding">
+        <div class="stats-card">
+          <h3>Your Stats</h3>
+          <p>Rating: 4.8 / 5</p>
+          <p>Active Menu: Rajma Chawal, Parathas</p>
+        </div>
+        
+        <h3 class="mt-4">Incoming Orders</h3>
+        <div id="incoming-orders-list">
+           <!-- Injected via JS -->
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Main App JS -->
+  <script src="app.js"></script>
+</body>
+</html>
