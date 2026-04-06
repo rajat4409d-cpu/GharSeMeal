@@ -1,5 +1,6 @@
 const DB_COOKS_KEY = "gharsemeal_cooks";
 const DB_ORDERS_KEY = "gharsemeal_orders";
+const DB_USERS_KEY = "gharsemeal_users";
 
 // Mock Data
 const initialCooks = [
@@ -46,6 +47,8 @@ const app = {
   markers: [],
   selectedCookId: null,
   activeView: 'view-landing',
+  currentUser: null,
+  authMode: { student: 'login', cook: 'login' },
   
   init() {
     // Scaffold DB
@@ -54,6 +57,9 @@ const app = {
     }
     if (!localStorage.getItem(DB_ORDERS_KEY)) {
       localStorage.setItem(DB_ORDERS_KEY, JSON.stringify([]));
+    }
+    if (!localStorage.getItem(DB_USERS_KEY)) {
+      localStorage.setItem(DB_USERS_KEY, JSON.stringify([]));
     }
     
     // Auto-set today in date picker
@@ -75,10 +81,91 @@ const app = {
 
   loginAs(role) {
     if (role === 'student') {
-      this.showView('view-student-dashboard');
+      this.showView('view-student-auth');
     } else {
-      this.showView('view-cook-dashboard');
+      this.showView('view-cook-auth');
     }
+  },
+
+  toggleAuthMode(role) {
+    this.authMode[role] = this.authMode[role] === 'login' ? 'signup' : 'login';
+    const isSignup = this.authMode[role] === 'signup';
+    
+    document.getElementById(`${role}-signup-fields`).style.display = isSignup ? 'block' : 'none';
+    document.getElementById(`${role}-auth-title`).textContent = isSignup ? 'Create an account' : 'Login to your account';
+    document.getElementById(`${role}-auth-btn`).textContent = isSignup ? 'Sign Up' : 'Login';
+    document.getElementById(`${role}-toggle-text`).textContent = isSignup ? 'Already have an account?' : "Don't have an account?";
+    document.getElementById(`${role}-toggle-link`).textContent = isSignup ? 'Login' : 'Sign up';
+  },
+
+  handleAuth(e, role) {
+    e.preventDefault();
+    const mode = this.authMode[role];
+    const prefix = role === 'student' ? 'auth-s' : 'auth-c';
+    
+    const name = document.getElementById(`${prefix}-name`).value.trim();
+    const password = document.getElementById(`${prefix}-pass`).value;
+    
+    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY));
+    
+    if (mode === 'signup') {
+      let newUser = { id: Date.now(), role, name, password };
+      if (role === 'student') {
+        newUser.college = document.getElementById(`${prefix}-college`).value.trim();
+        newUser.address = document.getElementById(`${prefix}-address`).value.trim();
+      } else {
+        newUser.address = document.getElementById(`${prefix}-address`).value.trim();
+        newUser.phone = document.getElementById(`${prefix}-phone`).value.trim();
+        newUser.cuisine = document.getElementById(`${prefix}-cuisine`).value.trim();
+        
+        // Auto-add new cook to the cooks DB
+        const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
+        cooks.push({
+          id: newUser.id,
+          name: newUser.name,
+          cuisine: newUser.cuisine || "Specialty foods",
+          price: 100,
+          rating: 5.0,
+          hygiene: 100,
+          lat: 28.6130 + (Math.random() * 0.01),
+          lon: 77.2000 + (Math.random() * 0.01),
+          menu: [],
+          recommended: false
+        });
+        localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+      }
+      
+      users.push(newUser);
+      localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
+      this.currentUser = newUser;
+      
+      // Update form toggle and reset
+      this.authMode[role] = 'login';
+      this.toggleAuthMode(role); // reverse back for next time
+      this.toggleAuthMode(role); // toggle back to logic
+    } else {
+      // Login
+      const user = users.find(u => u.role === role && u.name === name && u.password === password);
+      if (!user) {
+        alert("Invalid name or password.");
+        return;
+      }
+      this.currentUser = user;
+    }
+    
+    e.target.reset();
+    
+    // Navigate correctly based on role
+    // Since currentUser is ID'd properly we can use it to fetch the actual cook info later
+    if (role === 'student') {
+        document.getElementById('student-badge').textContent = this.currentUser.name;
+    }
+    this.showView(role === 'student' ? 'view-student-dashboard' : 'view-cook-dashboard');
+  },
+
+  logout() {
+    this.currentUser = null;
+    this.showView('view-landing');
   },
 
   initMap() {
@@ -256,7 +343,7 @@ const app = {
 
   renderManageMenu() {
     const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-    const myCook = cooks[0]; // Assuming Cook ID 1 is logged-in cook
+    const myCook = cooks.find(c => c.name === this.currentUser?.name) || cooks[0];
     const menuList = document.getElementById('cook-menu-list');
     
     menuList.innerHTML = myCook.menu.map((m, idx) => `
@@ -273,8 +360,14 @@ const app = {
     if (!val) return;
     
     const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-    cooks[0].menu.push(val);
-    localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    const cookIndex = cooks.findIndex(c => c.name === this.currentUser?.name);
+    if (cookIndex > -1) {
+      cooks[cookIndex].menu.push(val);
+      localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    } else {
+      cooks[0].menu.push(val);
+      localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    }
     
     input.value = '';
     this.renderManageMenu();
@@ -282,8 +375,14 @@ const app = {
 
   removeMenuItem(idx) {
     const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY));
-    cooks[0].menu.splice(idx, 1);
-    localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    const cookIndex = cooks.findIndex(c => c.name === this.currentUser?.name);
+    if (cookIndex > -1) {
+      cooks[cookIndex].menu.splice(idx, 1);
+      localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    } else {
+      cooks[0].menu.splice(idx, 1);
+      localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    }
     
     this.renderManageMenu();
   },

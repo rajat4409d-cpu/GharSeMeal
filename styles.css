@@ -375,3 +375,35 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
+
+/* Auth Styles */
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* minus header height */
+  height: calc(100vh - 65px);
+  background: var(--off-white);
+}
+.auth-card {
+  background: var(--white);
+  padding: 30px 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  margin: 0 20px;
+}
+.auth-toggle {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--gray-500);
+}
+.auth-toggle a {
+  color: var(--saffron);
+  font-weight: bold;
+  text-decoration: none;
+}
+.auth-toggle a:hover {
+  text-decoration: underline;
+}
