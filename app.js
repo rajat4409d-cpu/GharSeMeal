@@ -9,9 +9,9 @@ const firebaseConfig = {
   messagingSenderId: "265826374232",
   appId: "1:265826374232:web:04404977f61b4a2bde302d"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+
+let auth = null;
+let db = null;
 
 const DB_COOKS_KEY = "gharsemeal_cooks";
 const DB_ORDERS_KEY = "gharsemeal_orders";
@@ -154,66 +154,47 @@ const app = {
     document.getElementById('auth-submit-btn').textContent = "Loading...";
     
     if (mode === 'signup') {
-      auth.createUserWithEmailAndPassword(email, password)
-      .then(cred => {
-         return db.collection('users').doc(cred.user.uid).set({
-           name, email, role: 'student',
-           walletBalance: 500, mealsEaten: 0, runnerCount: 0,
-           createdAt: firebase.firestore.FieldValue.serverTimestamp()
-         });
-      })
-      .then(() => {
-         e.target.reset();
-         document.getElementById('auth-submit-btn').textContent = "Sign Up";
-      })
-      .catch(err => {
-         if (isLocalFile || err.code === 'auth/network-request-failed') {
-            console.warn("Using LocalStorage fallback for Student Signup.");
-            const users = JSON.parse(localStorage.getItem(DB_USERS_KEY) || '[]');
-            const mockUid = 'local_' + Date.now();
-            const newUser = { id: mockUid, name, email, role: 'student', walletBalance: 500, mealsEaten: 0 };
-            users.push(newUser);
-            localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
-            app.currentUser = newUser;
-            app.initStudentDashboard();
-            app.showView('studentDashboard');
-            e.target.reset();
-         } else {
-            alert(err.message);
-         }
-         document.getElementById('auth-submit-btn').textContent = "Sign Up";
-      });
+       const users = JSON.parse(localStorage.getItem(DB_USERS_KEY) || '[]');
+       const mockUid = 'local_' + Date.now();
+       const newUser = { id: mockUid, name, email, role: 'student', walletBalance: 500, mealsEaten: 0 };
+       users.push(newUser);
+       localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
+       app.currentUser = newUser;
+       app.initStudentDashboard();
+       app.showView('studentDashboard');
+       e.target.reset();
+       document.getElementById('auth-submit-btn').textContent = "Sign Up";
+       
+       if (auth && db) {
+         auth.createUserWithEmailAndPassword(email, password)
+         .then(cred => db.collection('users').doc(cred.user.uid).set({
+             name, email, role: 'student', walletBalance: 500, mealsEaten: 0,
+             createdAt: firebase.firestore.FieldValue.serverTimestamp()
+         })).catch(err => console.log(err));
+       }
     } else {
-      auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-         e.target.reset();
-         document.getElementById('auth-submit-btn').textContent = "Login to Dashboard";
-      })
-      .catch(err => {
-         if (isLocalFile || err.code === 'auth/network-request-failed') {
-            console.warn("Using LocalStorage fallback for Student Login.");
-            const users = JSON.parse(localStorage.getItem(DB_USERS_KEY) || '[]');
-            const user = users.find(u => u.email === email);
-            if (user) {
-               app.currentUser = user;
-               app.initStudentDashboard();
-               app.showView('studentDashboard');
-            } else {
-               alert("User not found in local backup. Please Sign Up.");
-            }
-         } else {
-            alert(err.message);
-         }
-         document.getElementById('auth-submit-btn').textContent = "Login to Dashboard";
-      });
+       const users = JSON.parse(localStorage.getItem(DB_USERS_KEY) || '[]');
+       const user = users.find(u => u.email === email);
+       if (user) {
+          app.currentUser = user;
+          app.initStudentDashboard();
+          app.showView('studentDashboard');
+          e.target.reset();
+       } else {
+          console.error("Local user not found.");
+       }
+       document.getElementById('auth-submit-btn').textContent = "Login to Dashboard";
+       
+       if (auth) {
+         auth.signInWithEmailAndPassword(email, password).catch(err => console.log(err));
+       }
     }
   },
 
   logout() {
-    auth.signOut().then(() => {
-       this.currentUser = null;
-       this.showView('landing');
-    });
+    this.currentUser = null;
+    this.showView('landing');
+    if (auth) auth.signOut().catch(err => console.log(err));
   },
 
   initStudentDashboard() {
@@ -366,34 +347,32 @@ const app = {
   },
 
   showCookProfile(id) {
-    db.collection('cooks').doc(id).get().then(doc => {
-      if(!doc.exists) return;
-      const cook = {id: doc.id, ...doc.data()};
-      this.selectedCookId = id;
-      
-      const cookName = cook.kitchenName || cook.cookName || cook.name || 'Cook';
-      const rating = cook.rating || 5.0;
-      const price = cook.pricePerMeal || cook.price || 100;
-      
-      document.getElementById('cp-name').textContent = cookName;
-      document.getElementById('cp-rating').textContent = rating;
-      document.getElementById('cp-avatar').textContent = cookName.charAt(0);
-      document.getElementById('cp-price').textContent = `₹${price}`;
-      
-      const menu = cook.menu || [];
-      const menuHtml = menu.map(item => `
-        <div class="card" style="padding:15px; display:flex; gap:15px; border:1px solid var(--gray-200); box-shadow:none;">
-           <div style="width:60px; height:60px; background:var(--gray-200); border-radius:12px;"></div>
-           <div style="flex:1;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                 <div style="font-weight:800; font-size:1.1rem; color:var(--secondary);">${item}</div>
-                 <div style="color:var(--primary); font-weight:700;">₹${price}</div>
-              </div>
-           </div>
-        </div>
-      `).join('');
-      
-      document.getElementById('cp-menu-grid').innerHTML = menuHtml;
+    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
+    const cook = cooks.find(c => c.id.toString() === id.toString());
+    if(!cook) return;
+    
+    this.selectedCookId = cook.id;
+    const cookName = cook.kitchenName || cook.cookName || cook.name || 'Cook';
+    const rating = cook.rating || 5.0;
+    const price = cook.pricePerMeal || cook.price || 100;
+    
+    document.getElementById('cp-name').textContent = cookName;
+    document.getElementById('cp-rating').textContent = rating;
+    document.getElementById('cp-avatar').textContent = cookName.charAt(0);
+    document.getElementById('cp-price').textContent = `₹${price}`;
+    
+    const menuHtml = (cook.menu || []).map(item => `
+      <div class="card" style="padding:15px; display:flex; gap:15px; border:1px solid var(--gray-200); box-shadow:none;">
+         <div style="width:60px; height:60px; background:var(--gray-200); border-radius:12px;"></div>
+         <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+               <div style="font-weight:800; font-size:1.1rem; color:var(--secondary);">${item}</div>
+               <div style="color:var(--primary); font-weight:700;">₹${price}</div>
+            </div>
+         </div>
+      </div>
+    `).join('');
+    document.getElementById('cp-menu-grid').innerHTML = menuHtml;
     
     const reviewsHtml = (cook.reviews || [
       { name: "Rahul S.", rating: 5, comment: "Just like home! Saving my life during exams." },
@@ -404,37 +383,20 @@ const app = {
         <p style="color:var(--gray-500); margin-top:4px;">"${r.comment}"</p>
       </div>
     `).join('');
-    
     document.getElementById('cp-reviews-list').innerHTML = reviewsHtml;
     
     this.showView('cookProfile');
-    })
-    .catch(err => {
-       console.warn("Using LocalStorage fallback for Cook Profile.");
-       const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
-       const cook = cooks.find(c => c.id.toString() === id.toString());
-       if(!cook) return;
-       
-       this.selectedCookId = cook.id;
-       document.getElementById('cp-name').textContent = cook.name;
-       document.getElementById('cp-rating').textContent = cook.rating || 5.0;
-       document.getElementById('cp-avatar').textContent = cook.name.charAt(0);
-       document.getElementById('cp-price').textContent = `₹${cook.price}`;
-       
-       const menuHtml = (cook.menu || []).map(item => `
-        <div class="card" style="padding:15px; display:flex; gap:15px; border:1px solid var(--gray-200); box-shadow:none;">
-           <div style="width:60px; height:60px; background:var(--gray-200); border-radius:12px;"></div>
-           <div style="flex:1;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                 <div style="font-weight:800; font-size:1.1rem; color:var(--secondary);">${item}</div>
-                 <div style="color:var(--primary); font-weight:700;">₹${cook.price}</div>
-              </div>
-           </div>
-        </div>
-       `).join('');
-       document.getElementById('cp-menu-grid').innerHTML = menuHtml;
-       this.showView('cookProfile');
-    });
+
+    if (db) {
+       db.collection('cooks').doc(id).get().then(doc => {
+         if(doc.exists) {
+            const remoteCook = {id: doc.id, ...doc.data()};
+            const idx = cooks.findIndex(c => c.id.toString() === id.toString());
+            if(idx > -1) cooks[idx] = remoteCook;
+            localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+         }
+       }).catch(err => console.log("Firebase Sync failed:", err.message));
+    }
   },
 
   submitReview() {
@@ -467,47 +429,6 @@ const app = {
   currentCookPrice: 100,
 
   showBookingForm() {
-    db.collection('cooks').doc(this.selectedCookId).get().then(doc => {
-      const cook = doc.data();
-      this.currentCookName = cook.kitchenName || cook.cookName || cook.name || 'Cook';
-      this.currentCookPrice = cook.pricePerMeal || cook.price || 100;
-      
-      const bookingDetails = document.getElementById('booking-details');
-      bookingDetails.innerHTML = `<h4 style="margin-bottom:10px; color: var(--navy);">Ordering from: ${this.currentCookName}</h4><p>Standard Meal Price: ₹${this.currentCookPrice}</p>`;
-      
-      // Reset form states
-      document.getElementById('b-runner').checked = false;
-      document.getElementById('b-plan').value = 'meal';
-      
-      const weeklyList = document.getElementById('b-weekly-list');
-      if (weeklyList) {
-         const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-         weeklyList.innerHTML = days.map(day => {
-           const isSunday = day === 'Sun';
-           return `
-           <div class="booking-day-col">
-             <div style="font-weight:800; color:var(--secondary); font-size:1.1rem; border-bottom:2px solid #E2E4E9; padding-bottom:10px;">${day}</div>
-             <label class="meal-check-slot">
-               <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">BRKFST</span>
-               <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="breakfast" onchange="app.calculateTotal()" ${isSunday ? 'checked' : ''}>
-             </label>
-             <label class="meal-check-slot">
-               <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">LUNCH</span>
-               <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="lunch" onchange="app.calculateTotal()" checked>
-             </label>
-             <label class="meal-check-slot">
-               <span style="font-size:0.8rem; font-weight:700; color:var(--gray-500);">DINNER</span>
-               <input type="checkbox" class="wk-slot" data-day="${day}" data-slot="dinner" onchange="app.calculateTotal()" checked>
-             </label>
-           </div>
-         `}).join('');
-      }
-
-      this.showView('booking');
-      this.calculateTotal();
-    })
-    .catch(err => {
-       console.warn("Using LocalStorage fallback for showBookingForm.");
        const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
        const cook = cooks.find(c => c.id.toString() === this.selectedCookId.toString());
        if(!cook) return;
@@ -547,7 +468,16 @@ const app = {
 
        this.showView('booking');
        this.calculateTotal();
-    });
+       
+       if (db) {
+         db.collection('cooks').doc(this.selectedCookId).get().then(doc => {
+           if(doc.exists) {
+             const rc = doc.data();
+             this.currentCookName = rc.kitchenName || rc.cookName || rc.name || cook.name;
+             this.currentCookPrice = rc.pricePerMeal || rc.price || cook.price;
+           }
+         }).catch(err => console.log(err));
+       }
   },
 
   calculateTotal() {
@@ -616,60 +546,48 @@ const app = {
     const isRunner = document.getElementById('b-runner').checked;
     const bookingCode = Math.floor(1000 + Math.random() * 9000).toString();
     
-    db.collection('bookings').add({
-      studentId: auth.currentUser.uid,
-      cookId: this.selectedCookId,
-      cookName: this.currentCookName,
-      mealType: plan.toUpperCase(),
-      date,
-      pickupTime: time,
-      planType: plan,
-      totalAmount: this.currentBookingTotal,
-      bookingCode,
-      status: 'pending',
-      isRunner,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      document.getElementById('success-cook').textContent = this.currentCookName;
-      document.getElementById('success-meal').textContent = plan.toUpperCase();
-      document.getElementById('success-time').textContent = time;
-      document.getElementById('success-date').textContent = date;
-      document.getElementById('success-code').textContent = '#' + bookingCode;
-      
-      let totalText = document.getElementById('b-total-amount').textContent;
-      document.getElementById('success-total').textContent = totalText;
-      
-      this.showView('booking-success');
-    }).catch(err => {
-       if (isLocalFile || err.code === 'auth/network-request-failed' || err.message.includes('offline')) {
-          console.warn("Using LocalStorage fallback for Bookings.");
-          const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY) || '[]');
-          orders.push({
-             id: Date.now(),
-             studentId: this.currentUser.id,
-             cookId: this.selectedCookId,
-             cookName: this.currentCookName,
-             mealType: plan.toUpperCase(),
-             date,
-             time, plan,
-             totalAmount: this.currentBookingTotal,
-             bookingCode,
-             status: 'Pending',
-             isRunner
-          });
-          localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
-          
-          document.getElementById('success-cook').textContent = this.currentCookName;
-          document.getElementById('success-meal').textContent = plan.toUpperCase();
-          document.getElementById('success-time').textContent = time;
-          document.getElementById('success-date').textContent = date;
-          document.getElementById('success-code').textContent = '#' + bookingCode;
-          document.getElementById('success-total').textContent = document.getElementById('b-total-amount').textContent;
-          this.showView('booking-success');
-       } else {
-          alert("Error: " + err.message);
-       }
+    // Primary storage: LocalStorage
+    const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY) || '[]');
+    orders.push({
+       id: Date.now(),
+       studentId: this.currentUser.id,
+       cookId: this.selectedCookId,
+       cookName: this.currentCookName,
+       mealType: plan.toUpperCase(),
+       date, time, plan,
+       totalAmount: this.currentBookingTotal,
+       bookingCode,
+       status: 'Pending',
+       isRunner
     });
+    localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
+    
+    document.getElementById('success-cook').textContent = this.currentCookName;
+    document.getElementById('success-meal').textContent = plan.toUpperCase();
+    document.getElementById('success-time').textContent = time;
+    document.getElementById('success-date').textContent = date;
+    document.getElementById('success-code').textContent = '#' + bookingCode;
+    document.getElementById('success-total').textContent = document.getElementById('b-total-amount').textContent;
+    
+    this.showView('booking-success');
+
+    // Secondary layer: background Firebase update
+    if (db) {
+       db.collection('bookings').add({
+         studentId: auth?.currentUser?.uid || this.currentUser.id,
+         cookId: this.selectedCookId,
+         cookName: this.currentCookName,
+         mealType: plan.toUpperCase(),
+         date,
+         pickupTime: time,
+         planType: plan,
+         totalAmount: this.currentBookingTotal,
+         bookingCode,
+         status: 'pending',
+         isRunner,
+         createdAt: firebase.firestore.FieldValue.serverTimestamp()
+       }).catch(err => console.log(err.message));
+    }
   },
 
   wizardDishes: [],
@@ -769,29 +687,22 @@ const app = {
     const userEmail = prompt("Enter email for your chef account:", "");
     if(!userEmail) return;
 
-    auth.createUserWithEmailAndPassword(userEmail, password)
-    .then(cred => db.collection('cooks').doc(cred.user.uid).set({
-      kitchenName, cookName, area, phone, cuisine,
-      pricePerMeal, menu, rating: 5.0, role: 'cook',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }))
-    .then(() => {
-       alert("Live success!");
-    })
-    .catch(err => {
-       if (isLocalFile || err.code === 'auth/network-request-failed') {
-          console.warn("Using LocalStorage fallback for Cook Signup.");
-          const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
-          const newCook = { id: Date.now(), email: userEmail, kitchenName, cookName, name: cookName, area, phone, cuisine, price: pricePerMeal, menu, rating: 5.0, role: 'cook' };
-          cooks.push(newCook);
-          localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
-          app.currentUser = newCook;
-          app.initCookDashboard();
-          app.showView('cookDashboard');
-       } else {
-          alert("Error: " + err.message);
-       }
-    });
+    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
+    const newCook = { id: Date.now(), email: userEmail, kitchenName, cookName, name: cookName, area, phone, cuisine, price: pricePerMeal, menu, rating: 5.0, role: 'cook' };
+    cooks.push(newCook);
+    localStorage.setItem(DB_COOKS_KEY, JSON.stringify(cooks));
+    app.currentUser = newCook;
+    app.initCookDashboard();
+    app.showView('cookDashboard');
+
+    if (auth && db) {
+      auth.createUserWithEmailAndPassword(userEmail, password)
+      .then(cred => db.collection('cooks').doc(cred.user.uid).set({
+        kitchenName, cookName, area, phone, cuisine,
+        pricePerMeal, menu, rating: 5.0, role: 'cook',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      })).catch(err => console.log(err.message));
+    }
   },
   
   handleCookLogin(e) {
@@ -799,26 +710,19 @@ const app = {
     const email = document.getElementById('cl-email').value.trim();
     const pass = document.getElementById('cl-password').value.trim();
     
-    auth.signInWithEmailAndPassword(email, pass)
-    .then(() => {
-       // state managed by onAuthStateChanged
-    })
-    .catch(err => {
-       if (isLocalFile || err.code === 'auth/network-request-failed') {
-          console.warn("Using LocalStorage fallback for Cook Login.");
-          const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
-          const user = cooks.find(c => c.email === email || c.name === email || c.kitchenName === email);
-          if (user) {
-             app.currentUser = user;
-             app.initCookDashboard();
-             app.showView('cookDashboard');
-          } else {
-             alert("Cook not found in local backup. Please register.");
-          }
-       } else {
-          alert(err.message);
-       }
-    });
+    const cooks = JSON.parse(localStorage.getItem(DB_COOKS_KEY) || '[]');
+    const user = cooks.find(c => c.email === email || c.name === email || c.kitchenName === email);
+    if (user) {
+       app.currentUser = user;
+       app.initCookDashboard();
+       app.showView('cookDashboard');
+    } else {
+       console.error("Cook not found locally.");
+    }
+    
+    if (auth) {
+      auth.signInWithEmailAndPassword(email, pass).catch(err => console.log(err.message));
+    }
   },
 
   initCookDashboard() {
@@ -905,75 +809,62 @@ const app = {
   },
 
   renderOrders() {
-    if (!auth.currentUser) return;
     const htmlEl = document.getElementById('cook-orders-list');
     if (!htmlEl) return;
     
-    db.collection('bookings')
-      .where('cookId', '==', auth.currentUser.uid)
-      .onSnapshot(snapshot => {
-         const orders = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-         if (orders.length === 0) {
+    // Primary: Local Storage
+    console.log("Loading Orders from LocalStorage");
+    const ordersItem = JSON.parse(localStorage.getItem(DB_ORDERS_KEY) || '[]');
+    const myOrders = this.currentUser ? ordersItem.filter(o => o.cookId.toString() === this.currentUser.id.toString()) : [];
+    
+    const renderHTML = (orderArray) => {
+       if (orderArray.length === 0) {
            htmlEl.innerHTML = '<p>No incoming orders yet.</p>';
            return;
-         }
-         
-         orders.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-         
-         htmlEl.innerHTML = orders.map(o => `
-             <div class="order-card" style="position:relative; margin-bottom: 20px;">
-               <p><strong>Booking Code:</strong> #${o.bookingCode || '0000'}</p>
-               <p><strong>Time:</strong> ${o.pickupTime || o.time} (${o.date})</p>
-               <p><strong>Plan:</strong> ${(o.planType || o.plan || 'Meal').toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup</span>' : ''}</p>
-               
-               <div style="margin-top:12px;">
-                 ${o.status.toLowerCase() === 'pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="app.updateOrderStatus('${o.id}', 'accepted')">Accept Order</button>` : ''}
-                 ${o.status.toLowerCase() === 'accepted' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#3B82F6;" onclick="app.updateOrderStatus('${o.id}', 'ready')">Mark Ready</button>` : ''}
-                 ${o.status.toLowerCase() === 'ready' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#10B981;" onclick="app.updateOrderStatus('${o.id}', 'complete')">Mark Complete</button>` : ''}
-                 ${o.status.toLowerCase() === 'complete' ? `<span style="background: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✅ Completed</span>` : ''}
-               </div>
-             </div>
-         `).join('');
-      }, err => {
-         if (isLocalFile || err.code === 'auth/network-request-failed' || err.message.includes('offline')) {
-            const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY) || '[]');
-            const myOrders = orders.filter(o => o.cookId.toString() === this.currentUser.id.toString());
-            if (myOrders.length === 0) {
-               htmlEl.innerHTML = '<p>No incoming orders yet. (Local Backup)</p>';
-               return;
-            }
-            myOrders.sort((a,b) => b.id - a.id);
-            htmlEl.innerHTML = myOrders.map(o => `
-             <div class="order-card" style="position:relative; margin-bottom: 20px;">
-               <p><strong>Booking Code:</strong> #${o.bookingCode || '0000'}</p>
-               <p><strong>Time:</strong> ${o.pickupTime || o.time} (${o.date})</p>
-               <p><strong>Plan:</strong> ${(o.planType || o.plan || 'Meal').toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup</span>' : ''}</p>
-               <div style="margin-top:12px;">
-                 ${o.status.toLowerCase() === 'pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="app.updateOrderStatus('${o.id}', 'accepted')">Accept Order</button>` : ''}
-                 ${o.status.toLowerCase() === 'accepted' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#3B82F6;" onclick="app.updateOrderStatus('${o.id}', 'ready')">Mark Ready</button>` : ''}
-                 ${o.status.toLowerCase() === 'ready' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#10B981;" onclick="app.updateOrderStatus('${o.id}', 'complete')">Mark Complete</button>` : ''}
-                 ${o.status.toLowerCase() === 'complete' ? `<span style="background: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✅ Completed</span>` : ''}
-               </div>
-             </div>
-            `).join('');
-         }
-      });
+       }
+       orderArray.sort((a,b) => b.id - a.id);
+       htmlEl.innerHTML = orderArray.map(o => `
+          <div class="order-card" style="position:relative; margin-bottom: 20px;">
+            <p><strong>Booking Code:</strong> #${o.bookingCode || '0000'}</p>
+            <p><strong>Time:</strong> ${o.pickupTime || o.time} (${o.date})</p>
+            <p><strong>Plan:</strong> ${(o.planType || o.plan || 'Meal').toUpperCase()} ${o.isRunner ? '<span class="user-badge" style="background:#2563EB;">Runner pickup</span>' : ''}</p>
+            <div style="margin-top:12px;">
+              ${(o.status || '').toLowerCase() === 'pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="app.updateOrderStatus('${o.id}', 'accepted')">Accept Order</button>` : ''}
+              ${(o.status || '').toLowerCase() === 'accepted' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#3B82F6;" onclick="app.updateOrderStatus('${o.id}', 'ready')">Mark Ready</button>` : ''}
+              ${(o.status || '').toLowerCase() === 'ready' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem; background:#10B981;" onclick="app.updateOrderStatus('${o.id}', 'complete')">Mark Complete</button>` : ''}
+              ${(o.status || '').toLowerCase() === 'complete' ? `<span style="background: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✅ Completed</span>` : ''}
+            </div>
+          </div>
+       `).join('');
+    };
+
+    renderHTML(myOrders);
+
+    // Secondary: Background Firebase listen
+    if (db && auth && auth.currentUser) {
+      db.collection('bookings')
+        .where('cookId', '==', auth.currentUser.uid)
+        .onSnapshot(snapshot => {
+           const remoteOrders = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+           // Silent sync into localstorage could be done here iteratively
+        }, err => console.log("Firebase Orders Error:", err.message));
+    }
   },
   
   updateOrderStatus(orderId, newStatus) {
-    db.collection('bookings').doc(orderId).update({ status: newStatus }).catch(err => {
-       if (isLocalFile) {
-          const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY) || '[]');
-          const idx = orders.findIndex(o => o.id.toString() === orderId.toString());
-          if (idx > -1) {
-             orders[idx].status = newStatus;
-             localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
-             this.renderOrders(); // Re-render since we don't have onSnapshot trigger from local storage
-          }
-       } else {
-          alert(err.message);
-       }
-    });
+     // Local priority
+     const orders = JSON.parse(localStorage.getItem(DB_ORDERS_KEY) || '[]');
+     const idx = orders.findIndex(o => o.id.toString() === orderId.toString());
+     if (idx > -1) {
+        orders[idx].status = newStatus;
+        localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
+        this.renderOrders();
+     }
+     
+     // Background Remote
+     if (db) {
+        db.collection('bookings').doc(orderId).update({ status: newStatus }).catch(err => console.log(err.message));
+     }
   },
 
   initTrackerView() {
@@ -1078,25 +969,21 @@ const app = {
 
   addWalletFunds(amt) {
      if(!this.currentUser) return;
-     db.collection('users').doc(auth?.currentUser?.uid || this.currentUser.id).update({
-        walletBalance: firebase.firestore.FieldValue.increment(amt)
-     }).then(() => {
-        alert(`₹${amt} added to Wallet successfully!`);
-        this.currentUser.walletBalance += amt;
-        this.currentUser.walletHistory = this.currentUser.walletHistory || [];
-        this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: amt, desc: 'Added Funds' });
-        this.updateCurrentUser();
-        this.showView('studentDashboard');
-     }).catch(err => {
-        if (isLocalFile) {
-           alert(`₹${amt} added to Local Wallet successfully!`);
-           this.currentUser.walletBalance += amt;
-           this.currentUser.walletHistory = this.currentUser.walletHistory || [];
-           this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: amt, desc: 'Added Local Funds' });
-           this.updateCurrentUser();
-           this.showView('studentDashboard');
-        } else alert(err.message);
-     });
+     
+     // Local storage updates
+     alert(`₹${amt} added to Wallet successfully!`);
+     this.currentUser.walletBalance += amt;
+     this.currentUser.walletHistory = this.currentUser.walletHistory || [];
+     this.currentUser.walletHistory.unshift({ date: new Date().toISOString().split('T')[0], amount: amt, desc: 'Added Funds' });
+     this.updateCurrentUser();
+     this.showView('studentDashboard');
+     
+     // Background Firebase update
+     if(db) {
+       db.collection('users').doc(auth?.currentUser?.uid || this.currentUser.id).update({
+          walletBalance: firebase.firestore.FieldValue.increment(amt)
+       }).catch(err => console.log(err.message));
+     }
   },
 
   markMealPickedUp(dayIdx, type) {
@@ -1109,17 +996,23 @@ const app = {
 
   updateCurrentUser() {
     if (this.currentUser) {
-       const collection = this.currentUser.role === 'student' ? 'users' : 'cooks';
-       db.collection(collection).doc(auth?.currentUser?.uid || this.currentUser.id).set(this.currentUser, { merge: true })
-         .catch(err => {
-            if (isLocalFile) {
-               const key = this.currentUser.role === 'student' ? DB_USERS_KEY : DB_COOKS_KEY;
-               const items = JSON.parse(localStorage.getItem(key) || '[]');
-               const idx = items.findIndex(i => i.id.toString() === this.currentUser.id.toString());
-               if(idx > -1) items[idx] = this.currentUser;
-               localStorage.setItem(key, JSON.stringify(items));
-            }
-         });
+       // Local Storage Write
+       const key = this.currentUser.role === 'student' ? DB_USERS_KEY : DB_COOKS_KEY;
+       const items = JSON.parse(localStorage.getItem(key) || '[]');
+       const idx = items.findIndex(i => i.id.toString() === this.currentUser.id.toString());
+       if(idx > -1) {
+           items[idx] = this.currentUser;
+       } else {
+           items.push(this.currentUser);
+       }
+       localStorage.setItem(key, JSON.stringify(items));
+       
+       // Silent Firebase sync
+       if(db) {
+         const collection = this.currentUser.role === 'student' ? 'users' : 'cooks';
+         db.collection(collection).doc(auth?.currentUser?.uid || this.currentUser.id).set(this.currentUser, { merge: true })
+           .catch(err => console.log(err.message));
+       }
     }
     this.updateGlobalHeader();
   },
@@ -1154,6 +1047,16 @@ const app = {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  auth = firebase.auth();
+  db = firebase.firestore();
+  
+  // Expose correctly
+  window.auth = auth;
+  window.db = db;
+  
   app.init();
 });
 
