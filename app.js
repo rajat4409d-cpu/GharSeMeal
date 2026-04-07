@@ -151,7 +151,7 @@ const app = {
     const password = document.getElementById('auth-password').value;
     const name = document.getElementById('auth-name').value.trim() || email.split('@')[0];
     
-    document.getElementById('auth-submit-btn').textContent = "Loading...";
+    document.getElementById('auth-submit-btn').textContent = "Login to Dashboard";
     
     if (mode === 'signup') {
        const users = JSON.parse(localStorage.getItem(DB_USERS_KEY) || '[]');
