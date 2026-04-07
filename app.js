@@ -1050,8 +1050,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!firebase.apps.length) {
     //firebase disabled
   }
-  auth = firebase.auth();
-  db = firebase.firestore();
+  auth = null;
+  db = null;
   
   // Expose correctly
   window.auth = auth;
