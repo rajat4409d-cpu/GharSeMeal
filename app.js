@@ -1048,7 +1048,7 @@ const app = {
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+    //firebase disabled
   }
   auth = firebase.auth();
   db = firebase.firestore();
