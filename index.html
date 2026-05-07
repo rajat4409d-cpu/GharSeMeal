@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GharSeMeal - Ghar Jaisa Khana, Ghar Ke Paas</title>
+  <meta name="description" content="Hyperlocal platform connecting PG/hostel students with home cooks in their neighbourhood.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar shadow-sm">
+    <div class="nav-brand" onclick="navigateTo('landing-page')">
+      <h1>GharSeMeal</h1>
+    </div>
+    <div class="nav-links">
+      <div id="nav-student-links" class="hidden">
+        <a href="#" onclick="navigateTo('student-dashboard')">Dashboard</a>
+        <a href="#" onclick="navigateTo('meal-tracker')">Meal Tracker</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+      <div id="nav-cook-links" class="hidden">
+        <a href="#" onclick="navigateTo('cook-dashboard')">Dashboard</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="app-container">
+    <!-- Page 1: Landing Page -->
+    <section id="landing-page" class="page-section active">
+      <div class="hero-section">
+        <div class="hero-content">
+          <span class="tagline">Connecting Neighborhoods Through Food</span>
+          <h1 class="hero-title">Ghar Jaisa Khana,<br><em>Ghar Ke Paas</em></h1>
+          <p class="hero-subtitle">Say goodbye to boring PG food. Connect with passionate home chefs in your neighborhood for healthy, delicious, and affordable home-cooked meals.</p>
+          <div class="hero-buttons">
+            <button class="btn btn-primary" onclick="navigateTo('student-login')">I'm a Student</button>
+            <button class="btn btn-secondary" onclick="navigateTo('cook-login')">I'm a Cook</button>
+          </div>
+        </div>
+        <div class="hero-image placeholder-image">
+          <!-- Stylized container representing food -->
+          <div class="hero-image-inner">
+            <div class="glass-card">
+              <div class="avatar chef-avatar"></div>
+              <div>
+                <h4>Auntie's Kitchen</h4>
+                <p class="text-sm">Verified Home Chef • 500m away</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-bar shadow-sm">
+        <div class="stat-item">
+          <h2>200+</h2>
+          <p>Students Fed</p>
+        </div>
+        <div class="stat-item">
+          <h2>50+</h2>
+          <p>Home Chefs</p>
+        </div>
+        <div class="stat-item">
+          <h2>4.8 <span class="star">★</span></h2>
+          <p>Average Rating</p>
+        </div>
+      </div>
+
+      <div class="how-it-works container">
+        <h2 class="section-heading text-center">How It Works</h2>
+        <div class="grid-2">
+          <div class="card card-how">
+            <div class="card-icon red-icon">🎓</div>
+            <h3>For Students</h3>
+            <ul class="steps-list">
+              <li><span class="step-num">1</span> <b>Find a Cook</b> Browse verified home chefs living just streets away from your hostel or PG.</li>
+              <li><span class="step-num">2</span> <b>Book Your Meals</b> Select your meal plan—daily, weekly, or monthly subscriptions tailored for you.</li>
+              <li><span class="step-num">3</span> <b>Pick Up & Enjoy</b> Walk over to your chef's home, pick up your fresh tiffin, and enjoy the taste of home.</li>
+            </ul>
+          </div>
+          <div class="card card-how">
+            <div class="card-icon yellow-icon">👩‍🍳</div>
+            <h3>For Cooks</h3>
+            <ul class="steps-list">
+              <li><span class="step-num">1</span> <b>Create Profile</b> Register your kitchen, upload your kitchen photos and verification docs.</li>
+              <li><span class="step-num">2</span> <b>Set Menu & Price</b> Choose which days you're available and set your own prices for meals.</li>
+              <li><span class="step-num">3</span> <b>Get Steady Students</b> Receive recurring orders from students in your area and earn a steady income.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="our-story container">
+        <div class="grid-2 align-center">
+          <div class="story-image placeholder-image rounded-xl"></div>
+          <div class="story-content">
+            <h2 class="section-heading">Our Story</h2>
+            <p>GharSeMeal connects students to home chefs in their neighbourhood. We believe everyone deserves a meal made with love, regardless of where they live.</p>
+            <p>Founded by ex-hostellers who were tired of the same oily mess in mess halls, we realized the solution was living right next door—passionate home cooks who wanted to share their culinary heritage and earn.</p>
+            <blockquote class="story-quote">
+              "Born from a real problem — bad PG food and an amazing aunty next door."
+            </blockquote>
+          </div>
+        </div>
+      </div>
+
+      <div class="value-props container">
+        <h2 class="section-heading text-center">Why GharSeMeal?</h2>
+        <div class="grid-3">
+          <div class="card text-center text-hover">
+            <div class="prop-icon">🍲</div>
+            <h3>Homemade Quality</h3>
+            <p>No mass production. Every meal is cooked in a real home kitchen using fresh, hand-picked ingredients and traditional recipes.</p>
+          </div>
+          <div class="card text-center text-hover">
+            <div class="prop-icon">💰</div>
+            <h3>Save vs Zomato</h3>
+            <p>By cutting out commercial overheads and delivery markups, we offer healthy food at a price that fits a student's budget perfectly.</p>
+          </div>
+          <div class="card text-center text-hover">
+            <div class="prop-icon">🤝</div>
+            <h3>Community First</h3>
+            <p>We empower local homemakers to become micro-entrepreneurs while helping students feel a little closer to home.</p>
+          </div>
+        </div>
+      </div>
+      
+      <footer class="footer">
+        <div class="container text-center">
+          <h2>GharSeMeal</h2>
+          <p>Bringing the warmth of a home kitchen to every student's plate.</p>
+          <div class="footer-links">
+            <a href="#">Terms</a>
+            <a href="#">Privacy</a>
+            <a href="#">Contact</a>
+          </div>
+        </div>
+      </footer>
+    </section>
+
+    <!-- Page 2: Student Login/Signup -->
+    <section id="student-login" class="page-section">
+      <div class="auth-container">
+        <div class="card auth-card">
+          <div class="auth-header">
+            <h2>Student Portal</h2>
+            <p>Welcome back! Ready for some good food?</p>
+          </div>
+          <form id="student-login-form" onsubmit="handleStudentLogin(event)">
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="student-email" class="form-control" required placeholder="student@example.com">
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" class="form-control" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <p class="auth-switch text-center mt-3">
+              Don't have an account? <a href="#" onclick="alert('Signup flow not implemented in this demo')">Sign up</a>
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 3: Student Dashboard -->
+    <section id="student-dashboard" class="page-section">
+      <div class="container mt-4">
+        <header class="dashboard-header">
+          <h2 id="student-greeting" class="section-heading">Good morning, Student!</h2>
+          <button class="btn btn-primary btn-sm" onclick="navigateTo('meal-tracker')">View Weekly Meal Tracker</button>
+        </header>
+
+        <div class="stats-bar student-stats mb-4 shadow-sm">
+          <div class="stat-item flex-row">
+            <div class="stat-icon red-icon">🍽️</div>
+            <div class="text-left">
+              <h3 id="stat-meals-eaten">12</h3>
+              <p>Meals Eaten</p>
+            </div>
+          </div>
+          <div class="stat-item flex-row">
+            <div class="stat-icon green-icon">₹</div>
+            <div class="text-left">
+              <h3 id="stat-saved">₹1440</h3>
+              <p>Saved vs Zomato</p>
+            </div>
+          </div>
+          <div class="stat-item flex-row">
+            <div class="stat-icon blue-icon">🏃</div>
+            <div class="text-left">
+              <h3 id="stat-runner">2x</h3>
+              <p>Runner Badge</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="banner premium-banner mb-4" onclick="navigateTo('subscriptions')">
+          <div class="banner-content">
+            <h3>Upgrade to Premium — ₹49/month</h3>
+            <p>Get priority bookings, zero service fees, and exclusive chef deals!</p>
+          </div>
+          <button class="btn btn-secondary btn-sm">See Plans</button>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="main-content">
+            <div class="card map-card mb-4">
+              <div class="card-header-flex">
+                <h3>Nearby Home-Chefs</h3>
+                <div class="filters">
+                  <input type="text" class="form-control search-bar" placeholder="Search cooks...">
+                  <select class="form-control d-inline w-auto ml-2">
+                    <option>All Cuisines</option>
+                    <option>North Indian</option>
+                    <option>South Indian</option>
+                  </select>
+                </div>
+              </div>
+              <div id="chefs-map" class="map-container rounded-lg shadow-inner"></div>
+            </div>
+
+            <div class="cook-list mt-4" id="nearby-cooks-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div class="sidebar">
+            <div class="card wallet-card sticky">
+              <div class="wallet-header">
+                <h3>GharSeMeal Wallet</h3>
+                <div class="wallet-icon">💳</div>
+              </div>
+              <div class="wallet-balance">
+                <span class="currency">₹</span>
+                <span id="wallet-balance-display" class="amount">500</span>
+              </div>
+              
+              <div class="wallet-add">
+                <p class="text-sm fw-600 mb-2">Quick Add</p>
+                <div class="preset-buttons">
+                  <button class="btn btn-outline btn-sm shadow-sm" onclick="addMoney(200)">₹200</button>
+                  <button class="btn btn-outline btn-sm shadow-sm" onclick="addMoney(500)">₹500</button>
+                  <button class="btn btn-outline btn-sm shadow-sm" onclick="addMoney(1000)">₹1000</button>
+                </div>
+              </div>
+              
+              <div class="wallet-history">
+                <p class="text-sm fw-600 mb-2">Recent Transactions</p>
+                <ul class="transaction-list" id="transaction-list">
+                  <!-- Rendered via JS -->
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 4: Cook Profile Page -->
+    <section id="cook-profile" class="page-section">
+      <div class="container mt-4">
+        <button class="btn btn-back mb-3" onclick="navigateTo('student-dashboard')">← Back to Dashboard</button>
+        
+        <div class="profile-header card mb-4">
+          <div class="profile-flex">
+            <div class="profile-image placeholder-image"></div>
+            <div class="profile-info">
+              <div class="flex-row justify-between align-center">
+                <h1 id="view-cook-name">Cook Name</h1>
+                <div class="badges">
+                  <span class="badge badge-accent">★ <span id="view-cook-rating">4.8</span></span>
+                  <span class="badge badge-green">Hygiene: <span id="view-cook-hygiene">95</span>%</span>
+                </div>
+              </div>
+              <p class="text-secondary mt-1">Authentic homemade food • 0.5 km away</p>
+              
+              <div class="profile-actions mt-3">
+                <button class="btn btn-primary" onclick="navigateTo('booking-page')">Book a Meal</button>
+                <a href="https://wa.me/1234567890" target="_blank" class="btn btn-green">Contact on WhatsApp</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="menu-section">
+            <h3 class="section-heading">Today's Menu</h3>
+            <div class="card menu-card">
+              <div class="menu-price-badge">
+                <span id="view-cook-price">₹80</span><span class="text-sm">/meal</span>
+              </div>
+              <ul class="menu-items mt-2" id="view-cook-menu">
+                <!-- Rendered via JS -->
+              </ul>
+            </div>
+          </div>
+          
+          <div class="reviews-section">
+            <h3 class="section-heading d-flex justify-between align-center">
+              Student Reviews
+              <button class="btn btn-outline btn-sm">Leave a Review</button>
+            </h3>
+            <div class="reviews-list">
+              <div class="card review-card mb-2">
+                <div class="review-header">
+                  <span class="font-bold">Rahul M.</span>
+                  <span class="star-rating text-accent">★★★★★</span>
+                </div>
+                <p class="text-sm mt-1">Best dal makhani I've had away from home! Aunty is so sweet.</p>
+              </div>
+              <div class="card review-card mb-2">
+                <div class="review-header">
+                  <span class="font-bold">Sneha K.</span>
+                  <span class="star-rating text-accent">★★★★☆</span>
+                </div>
+                <p class="text-sm mt-1">Great quantity for the price. Rotis are always soft.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 5: Booking Page -->
+    <section id="booking-page" class="page-section">
+      <div class="container mt-4">
+        <button class="btn btn-back mb-3" onclick="navigateTo('cook-profile')">← Back to Profile</button>
+        
+        <div class="card booking-card max-w-md mx-auto shadow-md">
+          <h2 class="text-center mb-3">Book Your Meal</h2>
+          <div class="booking-cook-info p-3 bg-light rounded mb-4 text-center">
+            <p class="m-0 text-sm">Ordering from:</p>
+            <h3 class="m-0 text-primary" id="booking-cook-name">Cook Name</h3>
+            <p class="m-0 mt-1 font-bold">₹<span id="booking-base-price">80</span> / meal</p>
+          </div>
+
+          <form id="booking-form" onsubmit="handleBooking(event)">
+            <div class="form-group">
+              <label>Meal Type</label>
+              <select class="form-control" id="booking-meal-type">
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="breakfast">Breakfast</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="date-picker-group">
+              <label>Date</label>
+              <input type="date" class="form-control" id="booking-date" required>
+            </div>
+
+            <div class="form-group" id="time-picker-group">
+              <label>Pickup Time Slot</label>
+              <select class="form-control" id="booking-time">
+                <option value="12:30">12:30 PM - 1:00 PM</option>
+                <option value="13:00">1:00 PM - 1:30 PM</option>
+                <option value="13:30">1:30 PM - 2:00 PM</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Payment Plan</label>
+              <select class="form-control" id="booking-plan-type" onchange="toggleWeeklyScheduler()">
+                <option value="meal">Pay Per Meal</option>
+                <option value="week">Pay Per Week (Flexible Scheduler)</option>
+              </select>
+            </div>
+
+            <!-- Flexible Weekly Scheduler -->
+            <div id="weekly-scheduler" class="hidden mb-4 p-3 border rounded border-primary">
+              <h4 class="mb-2">Weekly Plan Selection</h4>
+              <p class="text-sm text-secondary mb-3">Select your meals for the next 7 days. Skip meals anytime up to 2hrs before pickup for free!</p>
+              <div class="scheduler-grid" id="scheduler-grid">
+                <!-- Rendered via JS -->
+              </div>
+              <div class="mt-3 text-right font-bold text-primary">
+                <span id="scheduler-meal-count">0</span> meals selected
+              </div>
+            </div>
+
+            <div class="form-group checkbox-group runner-box p-3 rounded mt-3 mb-3">
+              <input type="checkbox" id="booking-runner" onchange="calculateTotal()">
+              <label for="booking-runner" class="m-0 ml-2">I'm picking up for 5+ people <br><span class="text-accent font-bold text-sm">(Runner gets meal free!)</span></label>
+            </div>
+
+            <div class="form-group">
+              <label>Payment Method</label>
+              <select class="form-control" id="booking-payment-method" onchange="checkWalletBalance()">
+                <option value="wallet">GharSeMeal Wallet (₹<span id="booking-wallet-bal">500</span>)</option>
+                <option value="cash">Pay on Pickup (Cash/UPI)</option>
+              </select>
+              <p id="wallet-warning" class="text-danger text-sm mt-1 hidden font-bold">Insufficient Wallet Balance!</p>
+            </div>
+
+            <div class="booking-summary mt-4 pt-3 border-t">
+              <div class="flex-row justify-between align-end mb-3">
+                <h3 class="m-0">Total</h3>
+                <h2 class="m-0 text-primary">₹<span id="booking-total">80</span></h2>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 btn-lg shadow-sm" id="btn-confirm-booking">Confirm Booking</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 6: Booking Confirmation -->
+    <section id="booking-confirm" class="page-section">
+      <div class="container text-center max-w-md mx-auto pt-5">
+        <div class="success-icon mb-3">✓</div>
+        <h1 class="text-primary mb-2">Booking Confirmed!</h1>
+        <p class="text-secondary mb-4">Your meal is reserved.</p>
+
+        <div class="card p-4 mb-4 text-left shadow-sm">
+          <div class="border-b pb-3 mb-3">
+            <h3 id="confirm-cook-name">Cook Name</h3>
+            <p class="text-sm mt-1 border-l-2 pl-2"><span id="confirm-meal-type">Lunch</span> • <span id="confirm-time">1:00 PM</span> • <span id="confirm-date">Today</span></p>
+          </div>
+          
+          <div class="text-center mt-4 mb-4">
+            <p class="text-sm text-secondary mb-1">Show this code to the cook</p>
+            <div class="booking-code text-primary shadow-inner">
+              <span id="confirm-code">8492</span>
+            </div>
+          </div>
+          
+          <div class="text-center">
+            <p class="text-sm text-secondary m-0">Total Paid</p>
+            <h3 class="m-0" id="confirm-total">₹80</h3>
+          </div>
+        </div>
+
+        <div class="flex-col gap-2">
+          <button class="btn btn-primary shadow-sm" onclick="navigateTo('meal-tracker')">View Meal Tracker</button>
+          <button class="btn btn-outline" onclick="navigateTo('student-dashboard')">Back to Home</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 7: Weekly Meal Tracker -->
+    <section id="meal-tracker" class="page-section">
+      <div class="container mt-4">
+        <header class="flex-row justify-between align-center mb-4 dashboard-header">
+          <h2 class="section-heading m-0">Weekly Meal Tracker</h2>
+          <button class="btn btn-outline btn-sm" onclick="navigateTo('student-dashboard')">Dashboard</button>
+        </header>
+
+        <div class="tracker-summary card mb-4 flex-row justify-between bg-primary text-white p-4 rounded-xl shadow-md">
+          <div>
+            <p class="text-sm op-80 m-0">This Week</p>
+            <h3 class="m-0 mt-1">14 Meals Total</h3>
+          </div>
+          <div class="text-right">
+            <p class="text-sm op-80 m-0">Savings</p>
+            <h3 class="m-0 mt-1 text-accent">₹1680 vs Zomato</h3>
+          </div>
+        </div>
+
+        <div class="tracker-grid grid-7">
+          <!-- Mon-Sun Columns generated via JS -->
+          <div id="tracker-calendar" class="w-100 flex-row gap-2" style="grid-column: 1/-1; display:flex; flex-wrap:wrap;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 8: Subscription Page -->
+    <section id="subscriptions" class="page-section">
+      <div class="container mt-5 pt-4">
+        <h1 class="text-center mb-1">Choose Your Plan</h1>
+        <p class="text-center text-secondary mb-5 max-w-md mx-auto">Get more out of GharSeMeal with flexible, student-friendly subscriptions.</p>
+
+        <div class="grid-2 max-w-lg mx-auto align-center">
+          <!-- Basic Plan -->
+          <div class="card pricing-card text-center shadow-sm">
+            <h3 class="text-secondary">BASIC</h3>
+            <div class="price">
+              <h2>₹49</h2>
+              <span>/month</span>
+            </div>
+            <ul class="ben-list mt-3 text-left">
+              <li>✓ Access to verified home chefs</li>
+              <li>✓ Ratings & hygiene scores</li>
+              <li>✓ Standard booking</li>
+              <li class="text-muted">✗ Priority booking</li>
+              <li class="text-muted">✗ Wallet cashback</li>
+            </ul>
+            <button class="btn btn-outline mt-4 w-100">Current Plan</button>
+          </div>
+
+          <!-- Premium Plan -->
+          <div class="card pricing-card premium highlighted text-center shadow-lg border-primary">
+            <div class="badge-pop">POPULAR</div>
+            <h3 class="text-primary">PREMIUM</h3>
+            <div class="price">
+              <h2>₹99</h2>
+              <span>/month</span>
+            </div>
+            <ul class="ben-list mt-3 text-left">
+              <li>✓ Everything in Basic</li>
+              <li>✓ Priority booking</li>
+              <li>✓ Skip meal notifications</li>
+              <li>✓ Wallet cashback 5%</li>
+              <li>✓ Exclusive chef deals</li>
+            </ul>
+            <button class="btn btn-primary mt-4 w-100 shadow-sm" onclick="alert('Upgraded to premium!')">Upgrade to Premium</button>
+          </div>
+        </div>
+        <div class="text-center mt-4">
+          <button class="btn btn-back" onclick="navigateTo('student-dashboard')">← Back to Dashboard</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 9: Cook Login/Signup -->
+    <section id="cook-login" class="page-section">
+      <div class="auth-container cook-bg">
+        <div class="card auth-card shadow-lg">
+          <div class="auth-header">
+            <span class="badge badge-accent mb-2">Cook Access</span>
+            <h2>Cook Dashboard</h2>
+            <p>Manage your kitchen and orders.</p>
+          </div>
+          
+          <div id="cook-login-view">
+            <form id="cook-login-form" onsubmit="handleCookLogin(event)">
+              <div class="form-group">
+                <label>Kitchen Name / Phone</label>
+                <input type="text" id="cook-auth-id" class="form-control" required placeholder="Aunty's Kitchen">
+              </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input type="password" class="form-control" required placeholder="••••••••">
+              </div>
+              <button type="submit" class="btn btn-secondary w-100 mt-2">Login to Kitchen</button>
+              <p class="auth-switch text-center mt-3">
+                Want to become a cook? <a href="#" onclick="showCookRegistration()">Join us</a>
+              </p>
+            </form>
+          </div>
+
+          <!-- Cook Registration Steps -->
+          <div id="cook-register-view" class="hidden">
+            <div class="progress-bar mb-3">
+              <div class="progress" id="cook-reg-progress" style="width: 33%"></div>
+            </div>
+            
+            <!-- Step 1 -->
+            <div id="reg-step-1" class="reg-step">
+              <h4>Step 1: Basic Info</h4>
+              <div class="form-group mt-2">
+                <label>Kitchen Name</label>
+                <input type="text" id="reg-kitchen-name" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>Your Name</label>
+                <input type="text" id="reg-cook-name" class="form-control" required>
+              </div>
+              <button class="btn btn-secondary w-100" onclick="nextRegStep(2)">Next</button>
+            </div>
+
+            <!-- Step 2 -->
+            <div id="reg-step-2" class="reg-step hidden">
+              <h4>Step 2: Menu Setup</h4>
+              <p class="text-sm text-secondary">Add a signature dish</p>
+              <div class="form-group mt-2">
+                <label>Dish Name</label>
+                <input type="text" id="reg-dish-name" class="form-control" placeholder="E.g., Rajma Chawal" required>
+              </div>
+              <div class="form-group">
+                <label>Price per Meal (₹)</label>
+                <input type="number" id="reg-dish-price" class="form-control" required value="80">
+              </div>
+              <div class="form-group checkbox-group">
+                <input type="checkbox" id="reg-is-veg" checked>
+                <label for="reg-is-veg" class="m-0 ml-2">Vegetarian</label>
+              </div>
+              <div class="flex-row gap-2">
+                <button class="btn btn-outline" onclick="nextRegStep(1)">Back</button>
+                <button class="btn btn-secondary flex-1" onclick="nextRegStep(3)">Next</button>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div id="reg-step-3" class="reg-step hidden">
+              <h4>Step 3: Go Live</h4>
+              <p class="text-sm text-secondary mb-3">Here's how your card will look to students:</p>
+              
+              <div class="card preview-card p-0 overflow-hidden mb-4 shadow-sm border border-light">
+                <div class="preview-img placeholder-image" style="height:120px;"></div>
+                <div class="p-3">
+                  <div class="flex-row justify-between">
+                    <h4 id="preview-k-name" class="m-0">Kitchen Name</h4>
+                    <span class="badge badge-accent">★ New</span>
+                  </div>
+                  <p class="text-sm mt-1 mb-2" id="preview-c-name">by Cook Name</p>
+                  <p class="text-primary font-bold text-sm">₹<span id="preview-price">80</span> / meal</p>
+                </div>
+              </div>
+
+              <div class="flex-row gap-2">
+                <button class="btn btn-outline" onclick="nextRegStep(2)">Back</button>
+                <button class="btn btn-primary flex-1 shadow-md" onclick="finishCookRegistration()">Go Live!</button>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 10: Cook Dashboard -->
+    <section id="cook-dashboard" class="page-section">
+      <div class="container mt-4">
+        <header class="dashboard-header align-center mb-4">
+          <div>
+            <h2 class="section-heading mb-1 m-0"><span id="cd-kitchen-name">Your Kitchen</span></h2>
+            <p class="text-secondary m-0 text-sm">Cook Dashboard</p>
+          </div>
+        </header>
+
+        <div class="grid-2">
+          <div>
+            <div class="card earnings-card bg-secondary text-white shadow-md mb-4 p-4 rounded-xl">
+              <h3 class="mb-4">Earnings</h3>
+              <div class="flex-row justify-between align-end border-b pb-3 border-op-20 mb-3">
+                <p class="m-0 op-80">Today's Earnings</p>
+                <h2 class="m-0 text-accent">₹<span id="cd-earn-today">0</span></h2>
+              </div>
+              <div class="flex-row justify-between align-end mb-1">
+                <p class="m-0 text-sm op-80">This Week's Earnings</p>
+                <h4 class="m-0">₹<span id="cd-earn-week">0</span></h4>
+              </div>
+              <div class="flex-row justify-between align-end">
+                <p class="m-0 text-sm op-80">Total Orders Today</p>
+                <h4 class="m-0" id="cd-orders-today">0</h4>
+              </div>
+            </div>
+
+            <div class="card stats-card mb-4 shadow-sm">
+               <h3 class="mb-3">Your Stats</h3>
+               <div class="flex-row justify-between align-center p-3 bg-light rounded">
+                 <span class="font-bold">Rating</span>
+                 <span class="badge badge-accent text-lg">★ <span id="cd-rating">New</span></span>
+               </div>
+               <div class="flex-row justify-between align-center p-3 bg-light rounded mt-2">
+                 <span class="font-bold">Hygiene Score</span>
+                 <span class="badge badge-green text-lg">100%</span>
+               </div>
+            </div>
+
+            <div class="card menu-manager mb-4 shadow-sm">
+              <h3 class="mb-3">Manage Active Menu</h3>
+              <ul class="cd-menu-list mb-3" id="cd-menu-list">
+                <!-- Rendered via JS -->
+              </ul>
+              <form class="add-dish-form flex-row gap-2" onsubmit="addDish(event)">
+                <input type="text" id="new-dish-name" class="form-control flex-1" placeholder="Add new dish" required>
+                <input type="number" id="new-dish-price" class="form-control" style="width:80px;" placeholder="₹" required>
+                <button type="submit" class="btn btn-secondary w-auto">+</button>
+              </form>
+            </div>
+          </div>
+
+          <div>
+            <div class="card orders-list-card shadow-sm full-height">
+              <div class="flex-row justify-between align-center border-b pb-3 mb-3">
+                <h3 class="m-0">Incoming Orders</h3>
+                <span class="badge badge-primary"><span id="cd-active-orders">0</span> Active</span>
+              </div>
+              
+              <div class="orders-container" id="cd-orders-container">
+                <!-- Rendered via JS -->
+                <p class="text-secondary text-center py-4">No active orders yet.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- Main Application Logic -->
+  <script src="main.js"></script>
+</body>
+</html>
